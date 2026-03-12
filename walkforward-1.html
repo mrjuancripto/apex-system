@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX WALK-FORWARD — Validación Real</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #04080f;
+  --bg2:    #080d18;
+  --bg3:    #0d1525;
+  --line:   #132035;
+  --dim:    #1e3050;
+  --text:   #c8d8f0;
+  --muted:  #3d5a80;
+  --muted2: #5a7a9a;
+  --green:  #00e676;
+  --red:    #ff1744;
+  --yellow: #ffd600;
+  --blue:   #00b0ff;
+  --orange: #ff6d00;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* GRID SCANLINES */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,176,255,0.015) 2px,
+    rgba(0,176,255,0.015) 4px
+  );
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:16px;}
+
+/* HEADER */
+.hdr{
+  border-bottom:1px solid var(--dim);
+  padding:20px 0 16px;
+  margin-bottom:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.hdr-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.4rem;
+  font-weight:800;
+  letter-spacing:6px;
+  color:var(--blue);
+  text-transform:uppercase;
+  line-height:1;
+}
+.hdr-sub{
+  font-size:0.58rem;
+  color:var(--muted2);
+  letter-spacing:2px;
+  margin-top:4px;
+}
+.nav{display:flex;gap:6px;}
+.nav a{
+  font-size:0.55rem;
+  letter-spacing:2px;
+  padding:5px 12px;
+  border:1px solid var(--dim);
+  color:var(--muted2);
+  text-decoration:none;
+  transition:all 0.2s;
+}
+.nav a:hover{border-color:var(--blue);color:var(--blue);}
+
+/* METODOLOGÍA */
+.method-strip{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--dim);
+  margin-bottom:20px;
+  border:1px solid var(--dim);
+}
+.method-cell{
+  background:var(--bg2);
+  padding:14px;
+  position:relative;
+  overflow:hidden;
+}
+.method-cell::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+}
+.method-cell.insample::before{background:var(--orange);}
+.method-cell.oos::before{background:var(--green);}
+.mc-label{font-size:0.5rem;letter-spacing:3px;color:var(--muted2);margin-bottom:6px;}
+.mc-period{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.3rem;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text);
+}
+.mc-type{
+  font-size:0.5rem;
+  letter-spacing:2px;
+  margin-top:4px;
+}
+.mc-type.is{color:var(--orange);}
+.mc-type.oos{color:var(--green);}
+
+/* PANEL CONFIGURACIÓN */
+.config-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-bottom:20px;
+}
+.panel{
+  background:var(--bg2);
+  border:1px solid var(--dim);
+  padding:16px;
+}
+.panel-title{
+  font-size:0.52rem;
+  letter-spacing:3px;
+  color:var(--blue);
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--dim);
+}
+
+/* COMBOS A PROBAR */
+.combo-list{display:flex;flex-direction:column;gap:6px;}
+.combo-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  background:var(--bg3);
+  border:1px solid var(--line);
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.combo-row:hover{border-color:var(--dim);}
+.combo-row.selected{border-color:var(--blue);background:rgba(0,176,255,0.05);}
+.combo-check{
+  width:14px;height:14px;
+  border:1px solid var(--muted);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:0.6rem;
+  color:var(--blue);
+}
+.combo-row.selected .combo-check{border-color:var(--blue);background:rgba(0,176,255,0.2);}
+.combo-name{font-size:0.62rem;color:var(--text);}
+.combo-tag{
+  margin-left:auto;
+  font-size:0.48rem;
+  letter-spacing:1px;
+  padding:2px 6px;
+  background:rgba(255,214,0,0.08);
+  color:var(--yellow);
+  border:1px solid rgba(255,214,0,0.15);
+}
+
+/* PARÁMETROS */
+.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.param-item{}
+.param-label{font-size:0.48rem;letter-spacing:2px;color:var(--muted2);margin-bottom:4px;}
+.param-select,.param-input{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--line);
+  color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.65rem;
+  padding:6px 8px;
+}
+.param-select:focus,.param-input:focus{outline:none;border-color:var(--blue);}
+
+/* ASSET SELECTOR */
+.asset-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:12px;
+}
+.asset-btn{
+  font-size:0.55rem;
+  letter-spacing:2px;
+  padding:5px 10px;
+  border:1px solid var(--dim);
+  background:transparent;
+  color:var(--muted2);
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.asset-btn.on{border-color:var(--green);color:var(--green);background:rgba(0,230,118,0.05);}
+
+/* BOTÓN PRINCIPAL */
+.run-btn{
+  width:100%;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.8rem;
+  font-weight:800;
+  letter-spacing:6px;
+  padding:18px;
+  background:transparent;
+  border:1px solid var(--blue);
+  color:var(--blue);
+  cursor:pointer;
+  transition:all 0.3s;
+  position:relative;
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.run-btn::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(0,176,255,0.08),transparent);
+  transform:translateX(-100%);
+  transition:transform 0.5s;
+}
+.run-btn:hover::before{transform:translateX(100%);}
+.run-btn:hover{background:rgba(0,176,255,0.08);}
+.run-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* PROGRESS */
+.progress-wrap{margin-bottom:20px;}
+.progress-header{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.55rem;
+  color:var(--muted2);
+  margin-bottom:6px;
+  letter-spacing:1px;
+}
+.progress-track{height:3px;background:var(--dim);}
+.progress-fill{height:100%;background:var(--blue);transition:width 0.2s;width:0%;}
+.progress-msg{
+  font-size:0.55rem;
+  color:var(--blue);
+  margin-top:6px;
+  min-height:16px;
+  letter-spacing:1px;
+}
+
+/* RESULTADOS */
+.results-header{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.6rem;
+  font-weight:700;
+  letter-spacing:4px;
+  color:var(--text);
+  margin-bottom:16px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--dim);
+}
+
+/* ASSET RESULT BLOCK */
+.asset-block{
+  background:var(--bg2);
+  border:1px solid var(--dim);
+  margin-bottom:16px;
+  overflow:hidden;
+}
+.asset-block-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--dim);
+  background:var(--bg3);
+}
+.ab-symbol{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2rem;
+  font-weight:800;
+  letter-spacing:4px;
+  line-height:1;
+}
+.ab-verdict{
+  font-size:0.52rem;
+  letter-spacing:3px;
+  padding:4px 10px;
+  border:1px solid;
+}
+.verdict-deploy{color:var(--green);border-color:rgba(0,230,118,0.3);background:rgba(0,230,118,0.05);}
+.verdict-caution{color:var(--yellow);border-color:rgba(255,214,0,0.3);background:rgba(255,214,0,0.05);}
+.verdict-reject{color:var(--red);border-color:rgba(255,23,68,0.3);background:rgba(255,23,68,0.05);}
+
+.ab-params{
+  margin-left:auto;
+  font-size:0.52rem;
+  color:var(--muted2);
+  text-align:right;
+  line-height:1.8;
+}
+.ab-params span{color:var(--text);}
+
+/* PERÍODOS GRID */
+.periods-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+  margin-bottom:1px;
+}
+.period-cell{
+  background:var(--bg2);
+  padding:14px;
+  position:relative;
+}
+.period-cell::after{
+  content:'';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:2px;
+}
+.period-cell.period-is::after{background:var(--orange);}
+.period-cell.period-pass::after{background:var(--green);}
+.period-cell.period-warn::after{background:var(--yellow);}
+.period-cell.period-fail::after{background:var(--red);}
+
+.pc-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.pc-month{font-size:0.55rem;letter-spacing:2px;color:var(--muted2);}
+.pc-tag{
+  font-size:0.45rem;
+  letter-spacing:2px;
+  padding:2px 6px;
+}
+.tag-is{color:var(--orange);border:1px solid rgba(255,109,0,0.3);}
+.tag-oos{color:var(--green);border:1px solid rgba(0,230,118,0.3);}
+
+.pc-metrics{display:flex;flex-direction:column;gap:5px;}
+.pc-metric{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.6rem;
+}
+.pc-metric-label{color:var(--muted2);}
+.pc-metric-val{font-weight:600;}
+
+/* DEGRADACIÓN */
+.degradation-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+}
+.deg-cell{
+  background:rgba(0,0,0,0.3);
+  padding:10px 14px;
+  font-size:0.55rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.deg-label{color:var(--muted2);letter-spacing:1px;}
+.deg-arrow{color:var(--muted);}
+
+/* VEREDICTO FINAL */
+.final-verdict{
+  background:var(--bg3);
+  border-top:1px solid var(--dim);
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.fv-text{font-size:0.62rem;color:var(--text);line-height:1.6;flex:1;}
+.fv-score{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.5rem;
+  font-weight:800;
+  letter-spacing:2px;
+  flex-shrink:0;
+}
+
+/* WORKER CONFIG OUTPUT */
+.config-output{
+  background:var(--bg2);
+  border:1px solid rgba(0,230,118,0.2);
+  padding:20px;
+  margin-bottom:20px;
+}
+.config-output-title{
+  font-size:0.52rem;
+  letter-spacing:3px;
+  color:var(--green);
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(0,230,118,0.15);
+}
+.config-code{
+  font-size:0.65rem;
+  color:var(--green);
+  line-height:1.9;
+  white-space:pre-wrap;
+  overflow-x:auto;
+}
+.copy-btn{
+  margin-top:12px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.55rem;
+  letter-spacing:2px;
+  padding:7px 16px;
+  background:transparent;
+  border:1px solid rgba(0,230,118,0.3);
+  color:var(--green);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.copy-btn:hover{background:rgba(0,230,118,0.08);}
+
+/* LOG */
+.log-wrap{
+  background:var(--bg2);
+  border:1px solid var(--dim);
+  padding:14px;
+}
+.log-title{font-size:0.52rem;letter-spacing:3px;color:var(--muted2);margin-bottom:10px;}
+.log-lines{max-height:200px;overflow-y:auto;}
+.log-line{
+  font-size:0.58rem;
+  padding:3px 0;
+  border-bottom:1px solid rgba(19,32,53,0.5);
+  display:flex;
+  gap:10px;
+}
+.log-t{color:var(--muted);flex-shrink:0;min-width:60px;}
+
+@media(max-width:900px){
+  .method-strip,.periods-grid,.degradation-row{grid-template-columns:1fr 1fr;}
+  .config-grid{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .method-strip,.periods-grid,.degradation-row{grid-template-columns:1fr;}
+  .param-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <div class="hdr-title">WALK-FORWARD</div>
+    <div class="hdr-sub">VALIDACIÓN REAL · 4 PERÍODOS MENSUALES · PARÁMETROS CONGELADOS · ANTI-OVERFITTING REAL</div>
+  </div>
+  <div class="nav">
+    <a href="trading-system-v1.html">DASHBOARD</a>
+    <a href="backtest.html">BACKTEST</a>
+    <a href="agent.html">AGENTE</a>
+  </div>
+</div>
+
+<!-- METODOLOGÍA VISUAL -->
+<div class="method-strip">
+  <div class="method-cell insample">
+    <div class="mc-label">PERÍODO 1</div>
+    <div class="mc-period" id="p1-label">DIC 2024</div>
+    <div class="mc-type is">IN-SAMPLE — ENCONTRAR PARAMS</div>
+  </div>
+  <div class="method-cell oos">
+    <div class="mc-label">PERÍODO 2</div>
+    <div class="mc-period" id="p2-label">ENE 2025</div>
+    <div class="mc-type oos">OUT-OF-SAMPLE — VALIDAR</div>
+  </div>
+  <div class="method-cell oos">
+    <div class="mc-label">PERÍODO 3</div>
+    <div class="mc-period" id="p3-label">FEB 2025</div>
+    <div class="mc-type oos">OUT-OF-SAMPLE — CONFIRMAR</div>
+  </div>
+  <div class="method-cell oos">
+    <div class="mc-label">PERÍODO 4</div>
+    <div class="mc-period" id="p4-label">MAR 2025</div>
+    <div class="mc-type oos">OUT-OF-SAMPLE — PRUEBA FINAL</div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="config-grid">
+
+  <!-- ACTIVOS Y PARÁMETROS -->
+  <div class="panel">
+    <div class="panel-title">ACTIVOS Y PARÁMETROS A PROBAR</div>
+
+    <div style="font-size:0.5rem;letter-spacing:2px;color:var(--muted2);margin-bottom:6px;">ACTIVOS</div>
+    <div class="asset-row" id="asset-row">
+      <button class="asset-btn on" data-asset="BTCUSDT" onclick="toggleAsset(this)">BTC</button>
+      <button class="asset-btn on" data-asset="ETHUSDT" onclick="toggleAsset(this)">ETH</button>
+      <button class="asset-btn on" data-asset="SOLUSDT" onclick="toggleAsset(this)">SOL</button>
+      <button class="asset-btn on" data-asset="XRPUSDT" onclick="toggleAsset(this)">XRP</button>
+      <button class="asset-btn on" data-asset="LTCUSDT" onclick="toggleAsset(this)">LTC</button>
+      <button class="asset-btn on" data-asset="LINKUSDT" onclick="toggleAsset(this)">LINK</button>
+      <button class="asset-btn on" data-asset="BNBUSDT" onclick="toggleAsset(this)">BNB</button>
+    </div>
+
+    <div class="param-grid">
+      <div class="param-item">
+        <div class="param-label">TIMEFRAME</div>
+        <select class="param-select" id="cfg-tf">
+          <option value="5m" selected>5 minutos</option>
+          <option value="15m">15 minutos</option>
+          <option value="3m">3 minutos</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-label">RSI PERÍODOS A PROBAR</div>
+        <select class="param-select" id="cfg-rsi">
+          <option value="6,7,9,14">6, 7, 9, 14</option>
+          <option value="6,7">Solo 6 y 7</option>
+          <option value="6">Solo RSI 6 (validado)</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-label">STOP LOSS A PROBAR</div>
+        <select class="param-select" id="cfg-stop">
+          <option value="0.015,0.02,0.023">1.5%, 2%, 2.3%</option>
+          <option value="0.015">Solo 1.5% (validado)</option>
+          <option value="0.015,0.02">1.5% y 2%</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-label">RATIO R:B A PROBAR</div>
+        <select class="param-select" id="cfg-rr">
+          <option value="2.0,2.5,3.0">1:2, 1:2.5, 1:3</option>
+          <option value="2.5">Solo 1:2.5 (validado)</option>
+          <option value="2.0,2.5">1:2 y 1:2.5</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-label">CONFIANZA MÍNIMA</div>
+        <select class="param-select" id="cfg-conf">
+          <option value="65,70,75">65%, 70%, 75%</option>
+          <option value="70" selected>Solo 70% (validado)</option>
+        </select>
+      </div>
+      <div class="param-item">
+        <div class="param-label">MÍNIMO TRADES/PERÍODO</div>
+        <select class="param-select" id="cfg-mintrades">
+          <option value="15" selected>15 trades</option>
+          <option value="20">20 trades</option>
+          <option value="10">10 trades</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMBINACIONES DE INDICADORES -->
+  <div class="panel">
+    <div class="panel-title">COMBINACIONES DE INDICADORES</div>
+    <div class="combo-list" id="combo-list">
+      <div class="combo-row selected" data-combo="0" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">RSI + MACD + BB + S/R + Fib</div>
+        <div class="combo-tag">VALIDADO</div>
+      </div>
+      <div class="combo-row selected" data-combo="1" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">RSI + MACD + BB + VWAP + Fib</div>
+        <div class="combo-tag">BNB</div>
+      </div>
+      <div class="combo-row selected" data-combo="2" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">RSI + MACD + BB + Fib</div>
+        <div class="combo-check" style="border:none;color:var(--muted)"></div>
+      </div>
+      <div class="combo-row selected" data-combo="3" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">RSI + MACD + BB + S/R</div>
+        <div class="combo-check" style="border:none;color:var(--muted)"></div>
+      </div>
+      <div class="combo-row selected" data-combo="4" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">RSI + BB + S/R + Fib</div>
+        <div class="combo-check" style="border:none;color:var(--muted)"></div>
+      </div>
+      <div class="combo-row selected" data-combo="5" onclick="toggleCombo(this)">
+        <div class="combo-check">✓</div>
+        <div class="combo-name">EMA + RSI + MACD + BB</div>
+        <div class="combo-check" style="border:none;color:var(--muted)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTÓN -->
+<button class="run-btn" id="run-btn" onclick="runWalkForward()">
+  EJECUTAR WALK-FORWARD REAL
+</button>
+
+<!-- PROGRESO -->
+<div class="progress-wrap" id="progress-wrap" style="display:none">
+  <div class="progress-header">
+    <span id="progress-label">DESCARGANDO DATOS HISTÓRICOS</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="progress-msg" id="progress-msg">Iniciando...</div>
+</div>
+
+<!-- RESULTADOS -->
+<div id="results-section" style="display:none">
+  <div class="results-header">RESULTADOS POR ACTIVO</div>
+  <div id="results-container"></div>
+
+  <!-- CONFIG PARA WORKER -->
+  <div class="config-output" id="worker-output" style="display:none">
+    <div class="config-output-title">CONFIG VALIDADA — LISTA PARA EL WORKER</div>
+    <div class="config-code" id="worker-code"></div>
+    <button class="copy-btn" onclick="copyWorkerConfig()">COPIAR AL CLIPBOARD</button>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="log-wrap">
+  <div class="log-title">LOG DEL SISTEMA</div>
+  <div class="log-lines" id="log-lines"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════
+const PROXIES = [
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+  'https://proxy.cors.sh/',
+];
+let activeProxy = 0;
+
+async function fetchWithProxy(url) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    const proxy = PROXIES[(activeProxy + i) % PROXIES.length];
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      activeProxy = (activeProxy + i) % PROXIES.length;
+      return data;
+    } catch(e) {
+      if (i < PROXIES.length - 1) log(`⚠️ Proxy falló, probando alternativo...`, 'var(--yellow)');
+    }
+  }
+  // intento directo como último recurso
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+}
+
+const COMBOS_DEF = [
+  { label:'RSI+MACD+BB+S/R+Fib',     inds:['rsi','macd','bb','sr','fib'] },
+  { label:'RSI+MACD+BB+VWAP+Fib',    inds:['rsi','macd','bb','vwap','fib'] },
+  { label:'RSI+MACD+BB+Fib',         inds:['rsi','macd','bb','fib'] },
+  { label:'RSI+MACD+BB+S/R',         inds:['rsi','macd','bb','sr'] },
+  { label:'RSI+BB+S/R+Fib',          inds:['rsi','bb','sr','fib'] },
+  { label:'EMA+RSI+MACD+BB',         inds:['ema','rsi','macd','bb'] },
+];
+
+const MACD_VARIANTS = [
+  { f:6,  s:13, sig:5  },
+  { f:8,  s:17, sig:9  },
+  { f:12, s:26, sig:9  },
+  { f:5,  s:13, sig:3  },
+];
+
+// ═══════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════
+let selectedAssets = new Set(['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','LTCUSDT','LINKUSDT','BNBUSDT']);
+let selectedCombos = new Set([0,1,2,3,4,5]);
+let logs = [];
+let finalConfig = {};
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function toggleAsset(el) {
+  const a = el.dataset.asset;
+  el.classList.toggle('on');
+  selectedAssets.has(a) ? selectedAssets.delete(a) : selectedAssets.add(a);
+}
+function toggleCombo(el) {
+  const i = parseInt(el.dataset.combo);
+  const chk = el.querySelector('.combo-check');
+  el.classList.toggle('selected');
+  if (selectedCombos.has(i)) {
+    selectedCombos.delete(i);
+    chk.textContent = '';
+  } else {
+    selectedCombos.add(i);
+    chk.textContent = '✓';
+  }
+}
+
+function log(text, color='var(--muted2)') {
+  const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.unshift({t,text,color});
+  if(logs.length>60) logs.pop();
+  document.getElementById('log-lines').innerHTML = logs.slice(0,20).map(l=>
+    `<div class="log-line"><span class="log-t">${l.t}</span><span style="color:${l.color}">${l.text}</span></div>`
+  ).join('');
+}
+
+function setProgress(pct, label, msg) {
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('progress-pct').textContent = Math.round(pct)+'%';
+  if(label) document.getElementById('progress-label').textContent = label;
+  if(msg)   document.getElementById('progress-msg').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════
+// PERÍODOS — últimos 4 meses completos
+// ═══════════════════════════════════════════════════════
+function getPeriods() {
+  const now = new Date();
+  const periods = [];
+  // 4 meses hacia atrás desde el mes anterior al actual
+  for (let i = 4; i >= 1; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const start = Math.floor(d.getTime());
+    const end = Math.floor(new Date(d.getFullYear(), d.getMonth()+1, 1).getTime()) - 1;
+    const name = d.toLocaleString('es-AR', {month:'short', year:'numeric'}).toUpperCase();
+    periods.push({ name, start, end, isInsample: i === 4 });
+  }
+  // Actualizar labels en el header
+  periods.forEach((p,i) => {
+    const el = document.getElementById(`p${i+1}-label`);
+    if(el) el.textContent = p.name;
+  });
+  return periods;
+}
+
+// ═══════════════════════════════════════════════════════
+// FETCH VELAS HISTÓRICAS — con paginación real
+// ═══════════════════════════════════════════════════════
+async function fetchKlinesRange(symbol, interval, startMs, endMs) {
+  const allCandles = [];
+  let currentStart = startMs;
+  const limit = 1000;
+
+  while (currentStart < endMs) {
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${currentStart}&endTime=${endMs}&limit=${limit}`;
+    try {
+      const data = await fetchWithProxy(url);
+      if (!Array.isArray(data) || data.length === 0) break;
+
+      for (const k of data) {
+        allCandles.push({
+          time:   k[0],
+          open:   parseFloat(k[1]),
+          high:   parseFloat(k[2]),
+          low:    parseFloat(k[3]),
+          close:  parseFloat(k[4]),
+          volume: parseFloat(k[5])
+        });
+      }
+      currentStart = data[data.length-1][0] + 1;
+      if (data.length < limit) break;
+      await new Promise(r => setTimeout(r, 100)); // rate limit
+    } catch(e) {
+      log(`⚠️ Error fetching ${symbol}: ${e.message}`, 'var(--yellow)');
+      break;
+    }
+  }
+  return allCandles;
+}
+
+// ═══════════════════════════════════════════════════════
+// INDICADORES
+// ═══════════════════════════════════════════════════════
+function ema(c, p) {
+  const k=2/(p+1); let e=[c[0]];
+  for(let i=1;i<c.length;i++) e.push(c[i]*k+e[i-1]*(1-k));
+  return e;
+}
+function rsi(c, p) {
+  let g=[],l=[];
+  for(let i=1;i<c.length;i++){const d=c[i]-c[i-1];g.push(d>0?d:0);l.push(d<0?Math.abs(d):0);}
+  let ag=g.slice(0,p).reduce((a,b)=>a+b,0)/p;
+  let al=l.slice(0,p).reduce((a,b)=>a+b,0)/p;
+  const r=[null];
+  for(let i=p;i<g.length;i++){
+    ag=(ag*(p-1)+g[i])/p;al=(al*(p-1)+l[i])/p;
+    r.push(al===0?100:100-100/(1+ag/al));
+  }
+  while(r.length<c.length)r.unshift(null);
+  return r;
+}
+function macd(c, f, s, sig) {
+  const ef=ema(c,f), es=ema(c,s);
+  const ml=ef.map((v,i)=>v-es[i]);
+  const sl=ema(ml,sig);
+  return { line:ml, signal:sl, hist:ml.map((v,i)=>v-sl[i]) };
+}
+function bb(c, p=20, m=2) {
+  return c.map((_,i)=>{
+    if(i<p-1)return{u:null,l:null,mid:null};
+    const sl=c.slice(i-p+1,i+1);
+    const mean=sl.reduce((a,b)=>a+b,0)/p;
+    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/p);
+    return{u:mean+m*std,l:mean-m*std,mid:mean};
+  });
+}
+function vwap(candles) {
+  let cv=0,cv2=0;
+  return candles.map(c=>{const tp=(c.high+c.low+c.close)/3;cv+=tp*c.volume;cv2+=c.volume;return cv2>0?cv/cv2:tp;});
+}
+function atr(candles, p=14) {
+  const tr=candles.map((c,i)=>i===0?c.high-c.low:
+    Math.max(c.high-c.low,Math.abs(c.high-candles[i-1].close),Math.abs(c.low-candles[i-1].close)));
+  const a=[tr[0]];
+  for(let i=1;i<tr.length;i++) a.push((a[i-1]*(p-1)+tr[i])/p);
+  return a;
+}
+function supportResistance(candles, lb=50) {
+  return candles.map((_,i)=>{
+    if(i<lb)return{res:null,sup:null};
+    const sl=candles.slice(i-lb,i);
+    const hi=sl.map(c=>c.high).sort((a,b)=>b-a);
+    const lo=sl.map(c=>c.low).sort((a,b)=>a-b);
+    return{res:hi.slice(0,3).reduce((a,b)=>a+b,0)/3, sup:lo.slice(0,3).reduce((a,b)=>a+b,0)/3};
+  });
+}
+function fibonacci(candles, lb=100) {
+  return candles.map((_,i)=>{
+    if(i<lb)return null;
+    const sl=candles.slice(i-lb,i);
+    const hi=Math.max(...sl.map(c=>c.high));
+    const lo=Math.min(...sl.map(c=>c.low));
+    const d=hi-lo;
+    return{r382:hi-d*0.382, r500:hi-d*0.5, r618:hi-d*0.618};
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SEÑAL
+// ═══════════════════════════════════════════════════════
+function getSignal(i, candles, inds, combo, rsiP) {
+  const c=candles[i];
+  let lS=0, sS=0;
+  const rsiOB = rsiP <= 7 ? 68 : 70;
+  const rsiOS = rsiP <= 7 ? 32 : 30;
+
+  if(combo.includes('ema') && inds.e9 && inds.e21) {
+    if(inds.e9[i]>inds.e21[i]) lS+=15; else sS+=15;
+    if(i>0&&inds.e9[i-1]<inds.e21[i-1]&&inds.e9[i]>inds.e21[i]) lS+=20;
+    if(i>0&&inds.e9[i-1]>inds.e21[i-1]&&inds.e9[i]<inds.e21[i]) sS+=20;
+  }
+  if(combo.includes('rsi') && inds.rsi && inds.rsi[i]!=null) {
+    const r=inds.rsi[i];
+    if(r<rsiOS) lS+=25; else if(r>rsiOB) sS+=25;
+    else if(r>50) lS+=8; else sS+=8;
+  }
+  if(combo.includes('macd') && inds.macd) {
+    const h=inds.macd.hist[i], ph=inds.macd.hist[i-1]||0;
+    if(ph<0&&h>0) lS+=20; if(ph>0&&h<0) sS+=20;
+    if(h>0&&h>ph) lS+=8; if(h<0&&h<ph) sS+=8;
+  }
+  if(combo.includes('bb') && inds.bb && inds.bb[i]?.l) {
+    if(c.close<inds.bb[i].l) lS+=20;
+    if(c.close>inds.bb[i].u) sS+=20;
+  }
+  if(combo.includes('vwap') && inds.vwap) {
+    if(c.close>inds.vwap[i]*1.001) lS+=10;
+    if(c.close<inds.vwap[i]*0.999) sS+=10;
+  }
+  if(combo.includes('sr') && inds.sr && inds.sr[i]?.sup) {
+    if(Math.abs(c.close-inds.sr[i].sup)/c.close<0.006) lS+=15;
+    if(Math.abs(c.close-inds.sr[i].res)/c.close<0.006) sS+=15;
+  }
+  if(combo.includes('fib') && inds.fib && inds.fib[i]) {
+    for(const lvl of [inds.fib[i].r382,inds.fib[i].r500,inds.fib[i].r618]) {
+      if(lvl && Math.abs(c.close-lvl)/c.close<0.003) {
+        if(c.close>candles[Math.max(0,i-10)].close) lS+=12; else sS+=12; break;
+      }
+    }
+  }
+  const total=lS+sS;
+  if(total===0) return null;
+  const conf=Math.round(Math.max(lS,sS)/total*100);
+  return {side:lS>=sS?'LONG':'SHORT', conf};
+}
+
+// ═══════════════════════════════════════════════════════
+// SIMULAR UN PERÍODO
+// ═══════════════════════════════════════════════════════
+function simulate(candles, combo, rsiP, macdP, stopPct, rrRatio, minConf=70) {
+  if(candles.length < 200) return null;
+  const closes = candles.map(c=>c.close);
+  const inds = {
+    e9:   combo.includes('ema') ? ema(closes,9)  : null,
+    e21:  combo.includes('ema') ? ema(closes,21) : null,
+    rsi:  combo.includes('rsi') ? rsi(closes,rsiP) : null,
+    macd: combo.includes('macd')? macd(closes,macdP.f,macdP.s,macdP.sig) : null,
+    bb:   combo.includes('bb')  ? bb(closes) : null,
+    vwap: combo.includes('vwap')? vwap(candles) : null,
+    sr:   combo.includes('sr')  ? supportResistance(candles) : null,
+    fib:  combo.includes('fib') ? fibonacci(candles) : null,
+  };
+
+  let cap=100, wins=0, losses=0, maxEq=100, maxDD=0;
+  const trades=[];
+  let openTrade=null;
+
+  for(let i=120; i<candles.length; i++) {
+    const c=candles[i];
+    if(openTrade) {
+      let closed=false, exit=c.close, reason='';
+      if(openTrade.side==='LONG') {
+        if(c.low<=openTrade.stop){exit=openTrade.stop;reason='SL';closed=true;}
+        else if(c.high>=openTrade.tp){exit=openTrade.tp;reason='TP';closed=true;}
+      } else {
+        if(c.high>=openTrade.stop){exit=openTrade.stop;reason='SL';closed=true;}
+        else if(c.low<=openTrade.tp){exit=openTrade.tp;reason='TP';closed=true;}
+      }
+      if(!closed&&(i-openTrade.ei)>=24){reason='TO';closed=true;}
+
+      if(closed) {
+        let pct = openTrade.side==='LONG'
+          ? (exit-openTrade.e)/openTrade.e
+          : (openTrade.e-exit)/openTrade.e;
+        pct *= 2; // leverage x2
+        const maxGain = stopPct * rrRatio;
+        const maxLoss = -stopPct;
+        const pnl = cap * 0.02 * Math.max(-1, Math.min(rrRatio, pct/stopPct));
+        cap += pnl;
+        if(pnl>=0) wins++; else losses++;
+        trades.push(pnl);
+        maxEq=Math.max(maxEq,cap);
+        maxDD=Math.max(maxDD,(maxEq-cap)/maxEq*100);
+        openTrade=null;
+      }
+    }
+
+    if(!openTrade) {
+      const sig=getSignal(i,candles,inds,combo,rsiP);
+      if(sig&&sig.conf>=minConf) {
+        const sp = sig.side==='LONG'?c.close*(1-stopPct):c.close*(1+stopPct);
+        const tp = sig.side==='LONG'?c.close*(1+stopPct*rrRatio):c.close*(1-stopPct*rrRatio);
+        openTrade={side:sig.side,e:c.close,stop:sp,tp,ei:i};
+      }
+    }
+  }
+
+  const n=trades.length;
+  if(n===0) return null;
+  const posT=trades.filter(p=>p>0), negT=trades.filter(p=>p<0);
+  const sumP=posT.reduce((a,b)=>a+b,0), sumN=negT.reduce((a,b)=>a+Math.abs(b),0);
+  const pf   = sumN>0?sumP/sumN : sumP>0?99:0;
+  const wr   = n>0?wins/n*100:0;
+  const avgW = posT.length?sumP/posT.length:0;
+  const avgL = negT.length?sumN/negT.length:0;
+  const ev   = (wr/100*avgW)-((1-wr/100)*avgL);
+
+  // días reales del período
+  const minutes = {'1m':1,'3m':3,'5m':5,'15m':15};
+  const tf = document.getElementById('cfg-tf').value;
+  const daysFraction = (candles.length*(minutes[tf]||5))/(60*24);
+  const daily = daysFraction>0 ? (Math.pow(cap/100,1/daysFraction)-1)*100 : 0;
+
+  return { cap, pf, wr, ev, daily, maxDD, n, trades };
+}
+
+// ═══════════════════════════════════════════════════════
+// WALK-FORWARD PRINCIPAL
+// ═══════════════════════════════════════════════════════
+async function runWalkForward() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ EJECUTANDO...';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('results-container').innerHTML = '';
+  document.getElementById('worker-output').style.display = 'none';
+  finalConfig = {};
+  logs = [];
+
+  const periods = getPeriods();
+  const tf = document.getElementById('cfg-tf').value;
+  const rsiOptions  = document.getElementById('cfg-rsi').value.split(',').map(Number);
+  const stopOptions = document.getElementById('cfg-stop').value.split(',').map(Number);
+  const rrOptions   = document.getElementById('cfg-rr').value.split(',').map(Number);
+  const confOptions = document.getElementById('cfg-conf').value.split(',').map(Number);
+  const minTrades   = parseInt(document.getElementById('cfg-mintrades').value);
+  const assets = [...selectedAssets];
+  const combos = [...selectedCombos].map(i=>COMBOS_DEF[i]);
+
+  const totalCombinations = rsiOptions.length * MACD_VARIANTS.length * stopOptions.length * rrOptions.length * confOptions.length * combos.length;
+  log(`🚀 Walk-forward iniciado · ${assets.length} activos · ${totalCombinations} combinaciones × 4 períodos`, 'var(--blue)');
+  log(`📅 Períodos: ${periods.map(p=>p.name).join(' → ')}`, 'var(--muted2)');
+
+  let globalDone = 0;
+  const totalWork = assets.length * (1 + totalCombinations); // descarga + combos por activo
+
+  for (const symbol of assets) {
+    // ── CREAR CARD PLACEHOLDER ──
+    const cardId = `block-${symbol}`;
+    document.getElementById('results-container').innerHTML += `
+      <div class="asset-block" id="${cardId}">
+        <div class="asset-block-header">
+          <div class="ab-symbol" style="color:var(--blue)">${symbol.replace('USDT','')}</div>
+          <div class="ab-verdict verdict-caution" style="animation:none">DESCARGANDO DATOS...</div>
+        </div>
+        <div style="padding:16px;font-size:0.6rem;color:var(--muted2)">Descargando ${periods.length} períodos de datos históricos reales...</div>
+      </div>
+    `;
+
+    // ── DESCARGAR DATOS POR PERÍODO ──
+    log(`📊 ${symbol}: descargando datos históricos...`, 'var(--yellow)');
+    const periodData = [];
+    let downloadOk = true;
+
+    for (let pi = 0; pi < periods.length; pi++) {
+      const p = periods[pi];
+      setProgress(
+        (globalDone/totalWork)*100,
+        `DESCARGANDO ${symbol} — ${p.name}`,
+        `Período ${pi+1}/4: ${p.name}`
+      );
+      try {
+        const candles = await fetchKlinesRange(symbol, tf, p.start, p.end);
+        if (candles.length < 100) {
+          log(`⚠️ ${symbol} ${p.name}: solo ${candles.length} velas, insuficiente`, 'var(--yellow)');
+          downloadOk = false;
+          break;
+        }
+        periodData.push({ ...p, candles });
+        log(`✅ ${symbol} ${p.name}: ${candles.length} velas`, 'var(--green)');
+      } catch(e) {
+        log(`❌ ${symbol} ${p.name}: error descargando`, 'var(--red)');
+        downloadOk = false;
+        break;
+      }
+    }
+
+    globalDone++;
+
+    if (!downloadOk || periodData.length < 4) {
+      document.getElementById(cardId).innerHTML = `
+        <div class="asset-block-header">
+          <div class="ab-symbol" style="color:var(--red)">${symbol.replace('USDT','')}</div>
+          <div class="ab-verdict verdict-reject">ERROR DE DATOS</div>
+        </div>
+        <div style="padding:16px;font-size:0.6rem;color:var(--red)">No se pudieron descargar suficientes datos históricos.</div>
+      `;
+      continue;
+    }
+
+    // ── IN-SAMPLE: ENCONTRAR MEJORES PARAMS EN PERÍODO 1 ──
+    log(`🔍 ${symbol}: buscando mejores parámetros en ${periodData[0].name} (in-sample)...`, 'var(--blue)');
+    setProgress((globalDone/totalWork)*100, `IN-SAMPLE ${symbol}`, `Probando ${totalCombinations} combinaciones en ${periodData[0].name}`);
+
+    let bestScore = -Infinity;
+    let bestParams = null;
+    let bestISResult = null;
+    let tested = 0;
+
+    for (const combo of combos) {
+      for (const rsiP of rsiOptions) {
+        for (const macdP of MACD_VARIANTS) {
+          for (const stopPct of stopOptions) {
+            for (const rrRatio of rrOptions) {
+              for (const minConf of confOptions) {
+                const res = simulate(periodData[0].candles, combo.inds, rsiP, macdP, stopPct, rrRatio, minConf);
+                if (res && res.n >= minTrades && res.pf > 1.0 && res.ev > 0) {
+                  // Score = PF × retorno diario (nuestras métricas validadas)
+                  const score = res.pf * Math.max(0, res.daily);
+                  if (score > bestScore) {
+                    bestScore = score;
+                    bestParams = { combo, rsiP, macdP, stopPct, rrRatio, minConf };
+                    bestISResult = res;
+                  }
+                }
+                tested++;
+                globalDone += (1/totalCombinations);
+                if (tested % 30 === 0) {
+                  setProgress((globalDone/totalWork)*100, `IN-SAMPLE ${symbol}`, `${tested}/${totalCombinations} combinaciones probadas`);
+                  await new Promise(r=>setTimeout(r,0));
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!bestParams) {
+      log(`⚠️ ${symbol}: sin parámetros viables en in-sample`, 'var(--yellow)');
+      document.getElementById(cardId).innerHTML = `
+        <div class="asset-block-header">
+          <div class="ab-symbol" style="color:var(--yellow)">${symbol.replace('USDT','')}</div>
+          <div class="ab-verdict verdict-reject">SIN PARÁMETROS VIABLES</div>
+        </div>
+        <div style="padding:16px;font-size:0.6rem;color:var(--muted2)">Ninguna combinación alcanzó mínimo de trades y PF>1 en el período in-sample.</div>
+      `;
+      continue;
+    }
+
+    log(`✅ ${symbol}: mejores params encontrados — PF:${bestISResult.pf.toFixed(2)} Daily:${bestISResult.daily.toFixed(2)}%`, 'var(--green)');
+
+    // ── OUT-OF-SAMPLE: MISMOS PARAMS EN PERÍODOS 2, 3, 4 ──
+    log(`🧪 ${symbol}: validando parámetros en ${periodData.slice(1).map(p=>p.name).join(', ')}...`, 'var(--blue)');
+    const oosResults = [];
+
+    for (let oi = 1; oi < 4; oi++) {
+      const res = simulate(
+        periodData[oi].candles,
+        bestParams.combo.inds,
+        bestParams.rsiP,
+        bestParams.macdP,
+        bestParams.stopPct,
+        bestParams.rrRatio,
+        bestParams.minConf
+      );
+      oosResults.push(res);
+      if (res) {
+        log(`  ${periodData[oi].name}: PF:${res.pf.toFixed(2)} Daily:${res.daily.toFixed(2)}% EV:$${res.ev.toFixed(2)} Trades:${res.n}`, res.pf>=1.3?'var(--green)':'var(--red)');
+      } else {
+        log(`  ${periodData[oi].name}: insuficientes trades`, 'var(--yellow)');
+      }
+    }
+
+    // ── VEREDICTO ──
+    const oosValid = oosResults.filter(r=>r&&r.n>=minTrades);
+    const pfPass   = oosValid.filter(r=>r.pf>=1.3).length;
+    const evPass   = oosValid.filter(r=>r.ev>0).length;
+    const ddPass   = oosValid.filter(r=>r.maxDD<25).length;
+    const passCount = oosValid.length;
+
+    // Degradación: ¿cuánto cayó el PF del IS al OOS promedio?
+    const avgOOSpf = oosValid.length ? oosValid.reduce((a,r)=>a+r.pf,0)/oosValid.length : 0;
+    const degradation = bestISResult.pf > 0 ? ((bestISResult.pf-avgOOSpf)/bestISResult.pf*100) : 100;
+
+    const DEPLOY   = passCount>=3 && pfPass>=2 && evPass>=2 && degradation<50;
+    const CAUTION  = passCount>=2 && pfPass>=1 && evPass>=1 && degradation<70;
+    const verdict  = DEPLOY ? 'DEPLOY' : CAUTION ? 'CAUTION' : 'REJECT';
+
+    if (DEPLOY) {
+      finalConfig[symbol] = { ...bestParams, metrics: bestISResult, verdict };
+      log(`🏆 ${symbol}: DEPLOY — pasa walk-forward real`, 'var(--green)');
+    } else if (CAUTION) {
+      log(`⚠️ ${symbol}: CAUTION — degradación alta (${degradation.toFixed(0)}%)`, 'var(--yellow)');
+    } else {
+      log(`❌ ${symbol}: REJECT — no sobrevive walk-forward`, 'var(--red)');
+    }
+
+    // ── RENDERIZAR RESULTADO ──
+    renderAssetBlock(cardId, symbol, bestParams, bestISResult, periodData, oosResults, verdict, degradation, avgOOSpf);
+  }
+
+  // ── GENERAR CONFIG PARA WORKER ──
+  generateWorkerConfig();
+  setProgress(100, 'WALK-FORWARD COMPLETADO', `${Object.keys(finalConfig).length} activos con parámetros validados`);
+  log(`✅ Walk-forward completo. ${Object.keys(finalConfig).length}/${assets.length} activos aprobados.`, 'var(--green)');
+  btn.disabled = false;
+  btn.textContent = 'EJECUTAR WALK-FORWARD REAL';
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER RESULTADO POR ACTIVO
+// ═══════════════════════════════════════════════════════
+function renderAssetBlock(cardId, symbol, params, isRes, periods, oosResults, verdict, degradation, avgOOSpf) {
+  const vClass = verdict==='DEPLOY'?'verdict-deploy':verdict==='CAUTION'?'verdict-caution':'verdict-reject';
+  const symColor = verdict==='DEPLOY'?'var(--green)':verdict==='CAUTION'?'var(--yellow)':'var(--red)';
+  const allResults = [isRes, ...oosResults];
+  const pfColor = v => v>=2?'var(--green)':v>=1.3?'var(--yellow)':'var(--red)';
+  const ddColor = v => v<10?'var(--green)':v<20?'var(--yellow)':'var(--red)';
+
+  // Score de robustez 0-100
+  const score = Math.min(100, Math.round(
+    (verdict==='DEPLOY'?40:verdict==='CAUTION'?20:0) +
+    Math.min(30, avgOOSpf*10) +
+    Math.min(20, Math.max(0,20-degradation/3)) +
+    (isRes.n>=20?10:5)
+  ));
+
+  const periodsHTML = periods.map((p,i) => {
+    const r = allResults[i];
+    const isIS = i===0;
+    const status = isIS?'is': r&&r.pf>=1.3&&r.ev>0?'pass':r&&r.pf>=1.0?'warn':'fail';
+    return `
+      <div class="period-cell period-${status}">
+        <div class="pc-header">
+          <span class="pc-month">${p.name}</span>
+          <span class="pc-tag ${isIS?'tag-is':'tag-oos'}">${isIS?'IN-SAMPLE':'OUT-OF-SAMPLE'}</span>
+        </div>
+        ${r ? `
+        <div class="pc-metrics">
+          <div class="pc-metric">
+            <span class="pc-metric-label">PROFIT FACTOR</span>
+            <span class="pc-metric-val" style="color:${pfColor(r.pf)}">${r.pf.toFixed(2)}</span>
+          </div>
+          <div class="pc-metric">
+            <span class="pc-metric-label">RETORNO/DÍA</span>
+            <span class="pc-metric-val" style="color:${r.daily>=1?'var(--green)':'var(--red)'}">${r.daily.toFixed(2)}%</span>
+          </div>
+          <div class="pc-metric">
+            <span class="pc-metric-label">EV/TRADE</span>
+            <span class="pc-metric-val" style="color:${r.ev>0?'var(--green)':'var(--red)'}">$${r.ev.toFixed(2)}</span>
+          </div>
+          <div class="pc-metric">
+            <span class="pc-metric-label">DRAWDOWN</span>
+            <span class="pc-metric-val" style="color:${ddColor(r.maxDD)}">${r.maxDD.toFixed(1)}%</span>
+          </div>
+          <div class="pc-metric">
+            <span class="pc-metric-label">WIN RATE</span>
+            <span class="pc-metric-val" style="color:var(--muted2)">${r.wr.toFixed(1)}%</span>
+          </div>
+          <div class="pc-metric">
+            <span class="pc-metric-label">TRADES</span>
+            <span class="pc-metric-val" style="color:var(--blue)">${r.n}</span>
+          </div>
+        </div>` : `<div style="font-size:0.6rem;color:var(--red);margin-top:8px;">SIN TRADES SUFICIENTES</div>`}
+      </div>
+    `;
+  }).join('');
+
+  // Degradación IS→OOS
+  const degHTML = allResults.map((r,i)=>`
+    <div class="deg-cell">
+      <span class="deg-label">${i===0?'IS':periods[i].name}</span>
+      <span style="color:${r?pfColor(r.pf):'var(--red)'}">${r?'PF '+r.pf.toFixed(2):'—'}</span>
+    </div>
+  `).join('');
+
+  const verdictText = verdict==='DEPLOY'
+    ? `Parámetros robustos. Sobrevivieron walk-forward real en múltiples períodos con regímenes de mercado distintos. Aprobado para el worker.`
+    : verdict==='CAUTION'
+    ? `Degradación detectada (${degradation.toFixed(0)}%). Los parámetros funcionan en algunos períodos pero son inconsistentes. Usar con riesgo reducido.`
+    : `Los parámetros no sobrevivieron la validación out-of-sample. Overfitting al período de entrenamiento. NO usar en el worker.`;
+
+  document.getElementById(cardId).innerHTML = `
+    <div class="asset-block-header">
+      <div class="ab-symbol" style="color:${symColor}">${symbol.replace('USDT','')}</div>
+      <div class="ab-verdict ${vClass}">${verdict}</div>
+      <div class="ab-params">
+        Combo: <span>${params.combo.label}</span><br>
+        RSI:<span>${params.rsiP}</span> MACD:<span>${params.macdP.f}/${params.macdP.s}/${params.macdP.sig}</span><br>
+        Stop:<span>${(params.stopPct*100).toFixed(1)}%</span> R:B:<span>1:${params.rrRatio}</span> Conf:<span>${params.minConf}%</span>
+      </div>
+    </div>
+    <div class="periods-grid">${periodsHTML}</div>
+    <div class="degradation-row">${degHTML}</div>
+    <div class="final-verdict">
+      <div class="fv-text">
+        <strong style="color:${symColor}">${verdict}:</strong> ${verdictText}
+        Degradación IS→OOS: <strong style="color:${degradation<30?'var(--green)':degradation<60?'var(--yellow)':'var(--red)'}">${degradation.toFixed(0)}%</strong>
+      </div>
+      <div class="fv-score" style="color:${score>=70?'var(--green)':score>=40?'var(--yellow)':'var(--red)'}">${score}</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// GENERAR CONFIG PARA WORKER
+// ═══════════════════════════════════════════════════════
+function generateWorkerConfig() {
+  const deployed = Object.entries(finalConfig).filter(([,v])=>v.verdict==='DEPLOY');
+  if (deployed.length === 0) return;
+
+  const lines = [
+    '// ═══════════════════════════════════════════',
+    '// APEX WALK-FORWARD CONFIG — VALIDADA REAL',
+    `// Generado: ${new Date().toLocaleString('es-AR')}`,
+    '// ═══════════════════════════════════════════',
+    'const ASSETS = {'
+  ];
+
+  for (const [sym, cfg] of deployed) {
+    lines.push(`  // ${sym.replace('USDT','')} — PF:${cfg.metrics.pf.toFixed(2)} Daily:${cfg.metrics.daily.toFixed(2)}% EV:$${cfg.metrics.ev.toFixed(2)}`);
+    lines.push(`  ${sym}: {`);
+    lines.push(`    tier: 1,`);
+    lines.push(`    rsiPeriod: ${cfg.rsiP},`);
+    lines.push(`    macdFast: ${cfg.macdP.f}, macdSlow: ${cfg.macdP.s}, macdSignal: ${cfg.macdP.sig},`);
+    lines.push(`    stopPct: ${cfg.stopPct},`);
+    lines.push(`    rrRatio: ${cfg.rrRatio},`);
+    lines.push(`    minConfidence: ${cfg.minConf},`);
+    lines.push(`    indicators: ${JSON.stringify(cfg.combo.inds)},`);
+    lines.push(`  },`);
+  }
+  lines.push('};');
+
+  const code = lines.join('\n');
+  document.getElementById('worker-code').textContent = code;
+  document.getElementById('worker-output').style.display = 'block';
+}
+
+function copyWorkerConfig() {
+  navigator.clipboard.writeText(document.getElementById('worker-code').textContent)
+    .then(()=>log('📋 Config copiada al clipboard', 'var(--green)'));
+}
+
+// Inicializar
+log('Walk-forward listo. Seleccioná activos y ejecutá.', 'var(--blue)');
+</script>
+</body>
+</html>
