@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX ANALYTICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #03070d;
+  --bg2:   #070f18;
+  --bg3:   #0b1622;
+  --wire:  #0e2030;
+  --dim:   #1a3550;
+  --muted: #2a4f70;
+  --text:  #c0d8f0;
+  --sub:   #5a8ab0;
+  --green: #00e87a;
+  --red:   #ff3355;
+  --gold:  #ffb800;
+  --blue:  #0af;
+  --purple:#9955ff;
+  --win:   #00e87a;
+  --loss:  #ff3355;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:13px;
+  min-height:100vh;
+}
+.page{max-width:1600px;margin:0 auto;padding:20px 16px;}
+
+/* HEADER */
+.hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:16px;border-bottom:1px solid var(--wire);
+  margin-bottom:20px;flex-wrap:wrap;gap:10px;
+}
+.logo{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.4rem;font-weight:800;letter-spacing:6px;
+  color:var(--text);line-height:1;
+}
+.logo span{color:var(--green);}
+.sub-logo{
+  font-size:0.55rem;letter-spacing:3px;color:var(--sub);margin-top:3px;
+}
+.nav{display:flex;gap:6px;flex-wrap:wrap;}
+.nav a{
+  font-size:0.55rem;letter-spacing:2px;
+  padding:5px 12px;border:1px solid var(--wire);
+  color:var(--sub);text-decoration:none;transition:all 0.2s;
+}
+.nav a:hover,.nav a.active{border-color:var(--green);color:var(--green);}
+.refresh-btn{
+  font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:2px;
+  padding:6px 16px;background:transparent;
+  border:1px solid var(--green);color:var(--green);
+  cursor:pointer;transition:all 0.2s;
+}
+.refresh-btn:hover{background:rgba(0,232,122,0.06);}
+
+/* STAT CARDS */
+.stats-row{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  gap:8px;margin-bottom:16px;
+}
+.scard{
+  background:var(--bg2);border:1px solid var(--wire);
+  padding:14px;position:relative;overflow:hidden;
+}
+.scard::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+}
+.sc-capital::after{background:var(--green);}
+.sc-pnl::after    {background:var(--blue);}
+.sc-wr::after     {background:var(--gold);}
+.sc-pf::after     {background:var(--purple);}
+.sc-dd::after     {background:var(--red);}
+.sc-trades::after {background:var(--sub);}
+
+.sc-label{font-size:0.48rem;letter-spacing:3px;color:var(--sub);margin-bottom:6px;}
+.sc-val{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.2rem;font-weight:700;line-height:1;letter-spacing:1px;
+}
+.sc-sub{font-size:0.5rem;color:var(--sub);margin-top:4px;}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+
+/* PANEL */
+.panel{background:var(--bg2);border:1px solid var(--wire);padding:0;}
+.panel-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--wire);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.panel-title{font-size:0.52rem;letter-spacing:3px;color:var(--blue);}
+.panel-body{padding:14px;}
+
+/* EQUITY CHART */
+.chart-wrap{position:relative;height:200px;}
+canvas{width:100%;height:100%;}
+
+/* TRADES TABLE */
+.trades-table{width:100%;border-collapse:collapse;}
+.trades-table th{
+  font-size:0.45rem;letter-spacing:2px;color:var(--sub);
+  padding:6px 10px;border-bottom:1px solid var(--wire);
+  text-align:left;font-weight:400;
+}
+.trades-table td{
+  padding:7px 10px;border-bottom:1px solid rgba(14,32,48,0.8);
+  font-size:0.6rem;
+}
+.trades-table tr:hover td{background:rgba(10,170,255,0.03);}
+.t-win{color:var(--green);}
+.t-loss{color:var(--red);}
+.t-sym{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:0.9rem;font-weight:600;letter-spacing:1px;
+}
+.side-long{color:var(--green);}
+.side-short{color:var(--red);}
+.reason-tp{color:var(--green);font-size:0.5rem;letter-spacing:1px;}
+.reason-sl{color:var(--red);font-size:0.5rem;letter-spacing:1px;}
+.reason-to{color:var(--gold);font-size:0.5rem;letter-spacing:1px;}
+
+/* WEIGHTS */
+.weights-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.w-cell{
+  background:var(--bg3);border:1px solid var(--wire);
+  padding:10px;text-align:center;
+}
+.w-name{font-size:0.48rem;letter-spacing:2px;color:var(--sub);margin-bottom:6px;}
+.w-bar-wrap{height:4px;background:var(--wire);margin-bottom:6px;border-radius:2px;}
+.w-bar{height:100%;border-radius:2px;transition:width 0.5s;}
+.w-val{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.4rem;font-weight:700;
+}
+
+/* POSICIONES ABIERTAS */
+.pos-list{display:flex;flex-direction:column;gap:6px;}
+.pos-card{
+  background:var(--bg3);border:1px solid var(--wire);
+  padding:10px 12px;display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;
+}
+.pos-sym{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.2rem;font-weight:700;letter-spacing:2px;
+  min-width:70px;
+}
+.pos-badge{
+  font-size:0.45rem;letter-spacing:2px;
+  padding:2px 8px;border:1px solid;
+}
+.pb-long{color:var(--green);border-color:rgba(0,232,122,0.3);}
+.pb-short{color:var(--red);border-color:rgba(255,51,85,0.3);}
+.pos-stat{font-size:0.55rem;color:var(--sub);}
+.pos-stat strong{color:var(--text);}
+.pos-pnl{
+  margin-left:auto;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.4rem;font-weight:700;
+}
+.pos-progress{
+  width:100%;height:3px;background:var(--wire);margin-top:6px;
+  border-radius:2px;overflow:hidden;
+}
+.pos-prog-fill{height:100%;background:var(--blue);transition:width 0.3s;}
+
+/* F&G GAUGE */
+.fg-wrap{display:flex;align-items:center;gap:16px;}
+.fg-num{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:4rem;font-weight:800;line-height:1;
+}
+.fg-info{flex:1;}
+.fg-label{font-size:0.7rem;font-weight:600;letter-spacing:2px;margin-bottom:4px;}
+.fg-bar{height:6px;background:var(--wire);border-radius:3px;margin-bottom:6px;}
+.fg-fill{height:100%;border-radius:3px;transition:width 0.5s;}
+.fg-desc{font-size:0.52rem;color:var(--sub);line-height:1.6;}
+
+/* MODO */
+.modo-badge{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.2rem;font-weight:700;letter-spacing:3px;
+  padding:8px 20px;border:1px solid;display:inline-block;
+  margin-bottom:10px;
+}
+
+/* LOADING */
+.loading{
+  display:flex;align-items:center;justify-content:center;
+  height:200px;font-size:0.6rem;letter-spacing:3px;color:var(--sub);
+}
+
+/* EMPTY */
+.empty{
+  padding:30px;text-align:center;
+  font-size:0.55rem;letter-spacing:2px;color:var(--muted);
+}
+
+@media(max-width:1000px){
+  .stats-row{grid-template-columns:repeat(3,1fr);}
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .weights-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .weights-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <div class="logo">APEX <span>ANALYTICS</span></div>
+    <div class="sub-logo">HISTORIAL REAL · EQUITY CURVE · TRADES · PESOS · POSICIONES</div>
+  </div>
+  <div class="nav">
+    <a href="trading-system-v1.html">DASHBOARD</a>
+    <a href="agent.html">AGENTE</a>
+    <a href="walkforward-v2.html">WALK-FORWARD</a>
+    <a href="analytics.html" class="active">ANALYTICS</a>
+  </div>
+  <button class="refresh-btn" onclick="loadAll()">↻ ACTUALIZAR</button>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-row">
+  <div class="scard sc-capital">
+    <div class="sc-label">CAPITAL ACTUAL</div>
+    <div class="sc-val" id="s-capital">—</div>
+    <div class="sc-sub" id="s-capital-sub">paper trading</div>
+  </div>
+  <div class="scard sc-pnl">
+    <div class="sc-label">PNL TOTAL</div>
+    <div class="sc-val" id="s-pnl">—</div>
+    <div class="sc-sub" id="s-pnl-sub">desde inicio</div>
+  </div>
+  <div class="scard sc-wr">
+    <div class="sc-label">WIN RATE</div>
+    <div class="sc-val" id="s-wr">—</div>
+    <div class="sc-sub" id="s-wr-sub">wins / losses</div>
+  </div>
+  <div class="scard sc-pf">
+    <div class="sc-label">PROFIT FACTOR</div>
+    <div class="sc-val" id="s-pf">—</div>
+    <div class="sc-sub" id="s-pf-sub">ganancias / pérdidas</div>
+  </div>
+  <div class="scard sc-dd">
+    <div class="sc-label">MAX DRAWDOWN</div>
+    <div class="sc-val" id="s-dd">—</div>
+    <div class="sc-sub">desde máximo</div>
+  </div>
+  <div class="scard sc-trades">
+    <div class="sc-label">TRADES CERRADOS</div>
+    <div class="sc-val" id="s-trades">—</div>
+    <div class="sc-sub" id="s-trades-sub">total operaciones</div>
+  </div>
+</div>
+
+<!-- EQUITY CURVE + MACRO -->
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">EQUITY CURVE</span>
+      <span style="font-size:0.48rem;color:var(--sub)" id="eq-range">cargando...</span>
+    </div>
+    <div class="panel-body">
+      <div class="chart-wrap" id="eq-wrap">
+        <div class="loading">CARGANDO DATOS...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">CONTEXTO MACRO ACTUAL</span>
+    </div>
+    <div class="panel-body">
+      <div id="macro-content"><div class="loading">CARGANDO...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- POSICIONES ABIERTAS -->
+<div class="panel" style="margin-bottom:12px;">
+  <div class="panel-hdr">
+    <span class="panel-title">POSICIONES ABIERTAS</span>
+    <span style="font-size:0.48rem;color:var(--sub)" id="pos-count">—</span>
+  </div>
+  <div class="panel-body">
+    <div id="positions-content"><div class="loading">CARGANDO...</div></div>
+  </div>
+</div>
+
+<!-- TRADES HISTORY + WEIGHTS -->
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">HISTORIAL DE TRADES</span>
+      <span style="font-size:0.48rem;color:var(--sub)" id="trades-count">—</span>
+    </div>
+    <div style="overflow-x:auto;max-height:360px;overflow-y:auto;">
+      <table class="trades-table">
+        <thead>
+          <tr>
+            <th>ACTIVO</th>
+            <th>LADO</th>
+            <th>ENTRADA</th>
+            <th>SALIDA</th>
+            <th>PNL</th>
+            <th>RAZÓN</th>
+            <th>MODO</th>
+            <th>SEÑALES</th>
+            <th>DURACIÓN</th>
+          </tr>
+        </thead>
+        <tbody id="trades-body">
+          <tr><td colspan="9" class="empty">CARGANDO...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">PESOS DEL SISTEMA (APRENDIZAJE)</span>
+    </div>
+    <div class="panel-body">
+      <div class="weights-grid" id="weights-content">
+        <div class="loading" style="grid-column:1/-1">CARGANDO...</div>
+      </div>
+      <div style="margin-top:12px;font-size:0.52rem;color:var(--sub);line-height:1.8;" id="weights-note"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RENDIMIENTO POR ACTIVO -->
+<div class="panel" style="margin-bottom:12px;">
+  <div class="panel-hdr">
+    <span class="panel-title">RENDIMIENTO POR ACTIVO</span>
+  </div>
+  <div class="panel-body">
+    <div id="by-asset-content"><div class="loading">CARGANDO...</div></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+<script>
+const WORKER = 'https://apex-agent.josepsanz2000.workers.dev';
+const CAPITAL_INICIAL = 100;
+
+let equityData = [];
+let tradesData = [];
+
+// ═══════════════════════════════════════════════
+// LOAD ALL
+// ═══════════════════════════════════════════════
+async function loadAll() {
+  try {
+    const [status, trades, weights, equity] = await Promise.all([
+      fetch(WORKER+'/status').then(r=>r.json()).catch(()=>null),
+      fetch(WORKER+'/trades').then(r=>r.json()).catch(()=>[]),
+      fetch(WORKER+'/weights').then(r=>r.json()).catch(()=>({})),
+      fetch(WORKER+'/equity').then(r=>r.json()).catch(()=>[]),
+    ]);
+
+    equityData = Array.isArray(equity) ? equity : [];
+    tradesData = Array.isArray(trades) ? trades : [];
+
+    renderStats(status, tradesData, equityData);
+    renderEquityCurve(equityData, tradesData);
+    renderMacro(status);
+    renderPositions(status);
+    renderTrades(tradesData);
+    renderWeights(weights);
+    renderByAsset(tradesData);
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// STATS CARDS
+// ═══════════════════════════════════════════════
+function renderStats(status, trades, equity) {
+  const capital = status?.capital || CAPITAL_INICIAL;
+  const pnl = capital - CAPITAL_INICIAL;
+  const pnlPct = (pnl / CAPITAL_INICIAL * 100);
+
+  const wins   = status?.stats?.wins   || trades.filter(t=>t.won).length;
+  const losses = status?.stats?.losses || trades.filter(t=>!t.won).length;
+  const total  = wins + losses;
+  const wr     = total > 0 ? (wins/total*100).toFixed(1) : '—';
+
+  const sumW = trades.filter(t=>t.won ).reduce((a,t)=>a+(t.pnl||0),0);
+  const sumL = trades.filter(t=>!t.won).reduce((a,t)=>a+Math.abs(t.pnl||0),0);
+  const pf   = sumL > 0 ? (sumW/sumL).toFixed(2) : sumW > 0 ? '∞' : '—';
+
+  // Drawdown desde equity curve
+  let maxDD = 0;
+  if(equity.length > 1) {
+    let peak = equity[0].capital;
+    for(const p of equity) {
+      if(p.capital > peak) peak = p.capital;
+      const dd = (peak - p.capital) / peak * 100;
+      if(dd > maxDD) maxDD = dd;
+    }
+  }
+
+  const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('s-capital').textContent = '$'+capital.toFixed(2);
+  document.getElementById('s-capital').style.color = 'var(--green)';
+  document.getElementById('s-capital-sub').textContent = `inicio $${CAPITAL_INICIAL}`;
+
+  document.getElementById('s-pnl').textContent = (pnl>=0?'+':'')+pnlPct.toFixed(1)+'%';
+  document.getElementById('s-pnl').style.color = pnlColor;
+  document.getElementById('s-pnl-sub').textContent = `$${Math.abs(pnl).toFixed(2)} ${pnl>=0?'ganancia':'pérdida'}`;
+
+  document.getElementById('s-wr').textContent = wr+'%';
+  document.getElementById('s-wr').style.color = wr >= 50 ? 'var(--green)' : 'var(--gold)';
+  document.getElementById('s-wr-sub').textContent = `${wins}W · ${losses}L`;
+
+  document.getElementById('s-pf').textContent = pf;
+  document.getElementById('s-pf').style.color = parseFloat(pf)>=1.5?'var(--green)':parseFloat(pf)>=1.0?'var(--gold)':'var(--red)';
+  document.getElementById('s-pf-sub').textContent = `$${sumW.toFixed(2)} / $${sumL.toFixed(2)}`;
+
+  document.getElementById('s-dd').textContent = maxDD.toFixed(1)+'%';
+  document.getElementById('s-dd').style.color = maxDD<10?'var(--green)':maxDD<20?'var(--gold)':'var(--red)';
+
+  document.getElementById('s-trades').textContent = total;
+  document.getElementById('s-trades-sub').textContent = `${wins} wins · ${losses} losses`;
+}
+
+// ═══════════════════════════════════════════════
+// EQUITY CURVE — canvas manual
+// ═══════════════════════════════════════════════
+function renderEquityCurve(equity, trades) {
+  const wrap = document.getElementById('eq-wrap');
+
+  // Si no hay equity curve pero hay trades, construirla desde trades
+  let points = equity;
+  if(points.length < 2 && trades.length > 0) {
+    let cap = CAPITAL_INICIAL;
+    points = [{ t: new Date(trades[0]?.openedAt||Date.now()).getTime() - 1000, capital: cap, fg: 50 }];
+    const sorted = [...trades].sort((a,b)=>new Date(a.closedAt)-new Date(b.closedAt));
+    for(const t of sorted) {
+      cap += (t.pnl||0);
+      points.push({ t: new Date(t.closedAt).getTime(), capital: cap, fg: 50 });
+    }
+  }
+
+  if(points.length < 2) {
+    wrap.innerHTML = '<div class="empty">SIN DATOS AÚN — EL SISTEMA NECESITA MÁS CICLOS</div>';
+    return;
+  }
+
+  // Rango
+  const first = new Date(points[0].t).toLocaleDateString('es-AR');
+  const last  = new Date(points[points.length-1].t).toLocaleDateString('es-AR');
+  document.getElementById('eq-range').textContent = `${first} → ${last} · ${points.length} puntos`;
+
+  const W = 600, H = 180;
+  const PAD = { t:16, r:16, b:28, l:52 };
+  const iW = W - PAD.l - PAD.r;
+  const iH = H - PAD.t - PAD.b;
+
+  const caps = points.map(p=>p.capital);
+  const minC = Math.min(...caps, CAPITAL_INICIAL) * 0.98;
+  const maxC = Math.max(...caps, CAPITAL_INICIAL) * 1.02;
+  const rangeC = maxC - minC || 1;
+
+  const px = (i) => PAD.l + (i / (points.length-1)) * iW;
+  const py = (v)  => PAD.t + iH - ((v - minC) / rangeC * iH);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">`;
+
+  // Grid
+  for(let g=0; g<=4; g++) {
+    const y = PAD.t + (g/4)*iH;
+    const val = maxC - (g/4)*rangeC;
+    svg += `<line x1="${PAD.l}" y1="${y}" x2="${W-PAD.r}" y2="${y}" stroke="#0e2030" stroke-width="1"/>`;
+    svg += `<text x="${PAD.l-6}" y="${y+4}" fill="#2a4f70" font-size="9" text-anchor="end" font-family="Space Mono">$${val.toFixed(0)}</text>`;
+  }
+
+  // Línea base (capital inicial)
+  const baseY = py(CAPITAL_INICIAL);
+  svg += `<line x1="${PAD.l}" y1="${baseY}" x2="${W-PAD.r}" y2="${baseY}" stroke="#1a3550" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+  // Área bajo la curva
+  let areaPath = `M ${px(0)} ${PAD.t+iH}`;
+  for(let i=0; i<points.length; i++) areaPath += ` L ${px(i)} ${py(points[i].capital)}`;
+  areaPath += ` L ${px(points.length-1)} ${PAD.t+iH} Z`;
+
+  const lastCap = points[points.length-1].capital;
+  const areaColor = lastCap >= CAPITAL_INICIAL ? '#00e87a' : '#ff3355';
+
+  svg += `<defs>
+    <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${areaColor}" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="${areaColor}" stop-opacity="0.01"/>
+    </linearGradient>
+  </defs>`;
+  svg += `<path d="${areaPath}" fill="url(#eg)"/>`;
+
+  // Línea
+  let linePath = '';
+  for(let i=0; i<points.length; i++) {
+    linePath += (i===0?'M':'L') + ` ${px(i)} ${py(points[i].capital)}`;
+  }
+  svg += `<path d="${linePath}" fill="none" stroke="${areaColor}" stroke-width="1.5"/>`;
+
+  // Puntos de trades cerrados
+  for(const t of trades.slice(-30)) {
+    const tTime = new Date(t.closedAt).getTime();
+    const idx = points.findIndex(p=>p.t >= tTime);
+    if(idx < 0) continue;
+    const x = px(idx), y = py(points[idx].capital);
+    const c = t.won ? '#00e87a' : '#ff3355';
+    svg += `<circle cx="${x}" cy="${y}" r="3" fill="${c}" opacity="0.8"/>`;
+  }
+
+  // Punto actual
+  const lastX = px(points.length-1), lastY = py(lastCap);
+  svg += `<circle cx="${lastX}" cy="${lastY}" r="4" fill="${areaColor}" stroke="#03070d" stroke-width="2"/>`;
+
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+}
+
+// ═══════════════════════════════════════════════
+// MACRO
+// ═══════════════════════════════════════════════
+function renderMacro(status) {
+  const wrap = document.getElementById('macro-content');
+  if(!status) { wrap.innerHTML = '<div class="empty">SIN DATOS</div>'; return; }
+
+  const fg = status.lastCycle?.fg || 50;
+  const mode = fg < 15 ? {label:'CAPITULACIÓN',color:'var(--green)'}
+             : fg < 25 ? {label:'PÁNICO',color:'var(--gold)'}
+             : fg < 45 ? {label:'MIEDO',color:'var(--gold)'}
+             : fg < 55 ? {label:'NEUTRAL',color:'var(--blue)'}
+             : fg < 75 ? {label:'CODICIA',color:'var(--green)'}
+             : {label:'EUFORIA',color:'var(--red)'};
+
+  const fgColor = fg < 25 ? 'var(--red)' : fg < 45 ? 'var(--gold)' : fg < 65 ? 'var(--blue)' : 'var(--green)';
+  const fgPct   = fg + '%';
+
+  const uptime = status.uptime ? timeSince(new Date(status.uptime)) : '—';
+  const lastCycle = status.lastCycle?.time ? timeSince(new Date(status.lastCycle.time)) + ' atrás' : '—';
+
+  wrap.innerHTML = `
+    <div class="modo-badge" style="color:${mode.color};border-color:${mode.color}33;">${mode.label}</div>
+    <div class="fg-wrap">
+      <div class="fg-num" style="color:${fgColor}">${fg}</div>
+      <div class="fg-info">
+        <div class="fg-label" style="color:${fgColor}">FEAR & GREED</div>
+        <div class="fg-bar"><div class="fg-fill" style="width:${fgPct};background:${fgColor}"></div></div>
+        <div class="fg-desc">
+          Último ciclo: <strong style="color:var(--text)">${lastCycle}</strong><br>
+          Uptime: <strong style="color:var(--text)">${uptime}</strong><br>
+          Capital: <strong style="color:var(--green)">$${(status.capital||100).toFixed(2)}</strong>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// POSICIONES
+// ═══════════════════════════════════════════════
+function renderPositions(status) {
+  const wrap = document.getElementById('positions-content');
+  const positions = status?.positions || {};
+  const posList = Object.values(positions);
+  document.getElementById('pos-count').textContent = `${posList.length} ABIERTAS`;
+
+  if(!posList.length) {
+    wrap.innerHTML = '<div class="empty">SIN POSICIONES ABIERTAS</div>';
+    return;
+  }
+
+  wrap.innerHTML = '<div class="pos-list">' + posList.map(p => {
+    const side = p.side === 'LONG';
+    const entry = p.entry;
+    const target = p.target;
+    const stop = p.stop;
+    const range = Math.abs(target - stop);
+    // Estimamos precio actual como mitad del camino (no tenemos precio real)
+    const progress = range > 0 ? Math.min(100, Math.max(0,
+      side ? ((entry - stop) / range * 50 + 50) : ((stop - entry) / range * 50 + 50)
+    )) : 50;
+
+    const riskPct = Math.abs(entry - stop) / entry * 100;
+    const rewardPct = Math.abs(target - entry) / entry * 100;
+    const since = timeSince(new Date(p.openedAt));
+
+    return `<div class="pos-card">
+      <div class="pos-sym" style="color:${side?'var(--green)':'var(--red)'}">${p.symbol.replace('USDT','')}</div>
+      <div class="pos-badge ${side?'pb-long':'pb-short'}">${p.side}</div>
+      <div class="pos-stat">Entry <strong>$${entry.toFixed(entry>100?2:4)}</strong></div>
+      <div class="pos-stat">SL <strong style="color:var(--red)">$${stop.toFixed(stop>100?2:4)}</strong></div>
+      <div class="pos-stat">TP <strong style="color:var(--green)">$${target.toFixed(target>100?2:4)}</strong></div>
+      <div class="pos-stat">R:B <strong>${(rewardPct/riskPct).toFixed(1)}x</strong></div>
+      <div class="pos-stat">Riesgo <strong style="color:var(--gold)">$${p.riskAmount.toFixed(2)}</strong></div>
+      <div class="pos-stat">Hace <strong>${since}</strong></div>
+      <div class="pos-stat">Conf <strong style="color:var(--blue)">${p.confidence}%</strong></div>
+      <div style="width:100%;margin-top:4px;">
+        <div class="pos-progress"><div class="pos-prog-fill" style="width:${progress}%"></div></div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// TRADES
+// ═══════════════════════════════════════════════
+function renderTrades(trades) {
+  const sorted = [...trades].sort((a,b)=>new Date(b.closedAt)-new Date(a.closedAt));
+  document.getElementById('trades-count').textContent = `${sorted.length} TRADES`;
+
+  if(!sorted.length) {
+    document.getElementById('trades-body').innerHTML = '<tr><td colspan="9" class="empty">SIN TRADES AÚN</td></tr>';
+    return;
+  }
+
+  document.getElementById('trades-body').innerHTML = sorted.map(t => {
+    const won = t.won || t.pnl > 0;
+    const pnlClass = won ? 't-win' : 't-loss';
+    const pnl = (t.pnl||0);
+    const reasonClass = t.reason==='TAKE PROFIT'?'reason-tp':t.reason==='STOP LOSS'?'reason-sl':'reason-to';
+    const reasonShort = t.reason==='TAKE PROFIT'?'TP':t.reason==='STOP LOSS'?'SL':'TO';
+
+    const dur = t.openedAt && t.closedAt
+      ? timeDiff(new Date(t.openedAt), new Date(t.closedAt))
+      : '—';
+
+    const signals = (t.signals||[]).slice(0,2).join(', ');
+
+    return `<tr>
+      <td><span class="t-sym">${(t.symbol||'').replace('USDT','')}</span></td>
+      <td class="${t.side==='LONG'?'side-long':'side-short'}">${t.side||'—'}</td>
+      <td>$${(t.entry||0).toFixed(t.entry>100?2:4)}</td>
+      <td>$${(t.exit||0).toFixed(t.exit>100?2:4)}</td>
+      <td class="${pnlClass}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td>
+      <td><span class="${reasonClass}">${reasonShort}</span></td>
+      <td style="font-size:0.5rem;color:var(--sub)">${t.mode||'—'}</td>
+      <td style="font-size:0.5rem;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis;">${signals}</td>
+      <td style="color:var(--sub)">${dur}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// WEIGHTS
+// ═══════════════════════════════════════════════
+function renderWeights(weights) {
+  if(!weights || !Object.keys(weights).length) {
+    document.getElementById('weights-content').innerHTML = '<div class="empty" style="grid-column:1/-1">SIN DATOS</div>';
+    return;
+  }
+
+  const defaultW = 1.0;
+  const maxW = Math.max(...Object.values(weights), 2.0);
+
+  const labels = { ema:'EMA', rsi:'RSI', macd:'MACD', bb:'BB', vwap:'VWAP', sr:'S/R', fib:'FIB', atr:'ATR', funding:'FUND', macro:'MACRO' };
+
+  const sorted = Object.entries(weights).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('weights-content').innerHTML = sorted.map(([k,v]) => {
+    const pct = (v / maxW * 100);
+    const color = v > 1.3 ? 'var(--green)' : v < 0.7 ? 'var(--red)' : 'var(--blue)';
+    const delta = v - defaultW;
+    const deltaStr = delta >= 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
+    return `<div class="w-cell">
+      <div class="w-name">${labels[k]||k}</div>
+      <div class="w-bar-wrap"><div class="w-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="w-val" style="color:${color}">${v.toFixed(2)}</div>
+      <div style="font-size:0.45rem;color:${delta>=0?'var(--green)':'var(--red)'};">${deltaStr}</div>
+    </div>`;
+  }).join('');
+
+  // Nota interpretativa
+  const topW = sorted.slice(0,2).map(([k])=>labels[k]||k).join(', ');
+  const botW = sorted.slice(-2).map(([k])=>labels[k]||k).join(', ');
+  document.getElementById('weights-note').innerHTML =
+    `El sistema aprendió que <strong style="color:var(--green)">${topW}</strong> son los indicadores más predictivos.<br>
+     <strong style="color:var(--red)">${botW}</strong> fueron penalizados por señales incorrectas.`;
+}
+
+// ═══════════════════════════════════════════════
+// POR ACTIVO
+// ═══════════════════════════════════════════════
+function renderByAsset(trades) {
+  const wrap = document.getElementById('by-asset-content');
+  if(!trades.length) { wrap.innerHTML='<div class="empty">SIN DATOS</div>'; return; }
+
+  const byAsset = {};
+  for(const t of trades) {
+    const s = t.symbol||'UNKNOWN';
+    if(!byAsset[s]) byAsset[s] = { wins:0, losses:0, pnl:0, trades:[] };
+    byAsset[s].trades.push(t);
+    byAsset[s].pnl += (t.pnl||0);
+    if(t.won||t.pnl>0) byAsset[s].wins++; else byAsset[s].losses++;
+  }
+
+  const sorted = Object.entries(byAsset).sort((a,b)=>b[1].pnl-a[1].pnl);
+
+  wrap.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">` +
+    sorted.map(([sym,d]) => {
+      const total = d.wins + d.losses;
+      const wr = total > 0 ? (d.wins/total*100).toFixed(0) : 0;
+      const color = d.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<div style="background:var(--bg3);border:1px solid var(--wire);padding:12px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:2px;color:${color};margin-bottom:6px;">${sym.replace('USDT','')}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:700;color:${color};">${d.pnl>=0?'+':''}$${d.pnl.toFixed(2)}</div>
+        <div style="font-size:0.5rem;color:var(--sub);margin-top:4px;">${total} trades · ${wr}% WR</div>
+        <div style="font-size:0.5rem;color:var(--sub);">${d.wins}W · ${d.losses}L</div>
+        <div style="height:3px;background:var(--wire);margin-top:6px;border-radius:2px;">
+          <div style="height:100%;width:${wr}%;background:${color};border-radius:2px;"></div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function timeSince(date) {
+  const sec = Math.floor((Date.now() - date) / 1000);
+  if(sec < 60)   return sec + 's';
+  if(sec < 3600) return Math.floor(sec/60) + 'm';
+  if(sec < 86400)return Math.floor(sec/3600) + 'h';
+  return Math.floor(sec/86400) + 'd';
+}
+function timeDiff(a, b) {
+  const sec = Math.floor((b-a)/1000);
+  if(sec < 60)   return sec+'s';
+  if(sec < 3600) return Math.floor(sec/60)+'m';
+  return Math.floor(sec/3600)+'h '+Math.floor((sec%3600)/60)+'m';
+}
+
+// Init
+loadAll();
+// Auto-refresh cada 5 minutos
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>

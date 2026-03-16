@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>APEX BACKTEST v3</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040810;--bg2:#070d1a;--bg3:#0a1220;--bg4:#0d1828;
+  --wire:#0f2035;--dim:#162840;--muted:#1e3a55;
+  --text:#b0cce8;--sub:#4a7a9b;--dim2:#2a5070;
+  --green:#00ff88;--red:#ff2244;--gold:#ffaa00;
+  --blue:#00ccff;--purple:#aa44ff;--orange:#ff6600;
+  --teal:#00ddbb;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+
+/* SCANLINES */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:999;}
+
+.page{max-width:1500px;margin:0 auto;padding:24px 16px;}
+
+/* HEADER */
+.hdr{margin-bottom:28px;}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--wire);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;letter-spacing:8px;line-height:1;color:var(--text);}
+.logo em{color:var(--green);font-style:normal;}
+.logo-sub{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:3px;color:var(--sub);margin-top:6px;}
+.nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.nav a{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:2px;padding:5px 12px;border:1px solid var(--wire);color:var(--sub);text-decoration:none;transition:all 0.2s;}
+.nav a:hover,.nav a.act{border-color:var(--green);color:var(--green);}
+
+/* ARCHITECTURE STRIP */
+.arch{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--wire);margin-bottom:20px;}
+.arch-cell{background:var(--bg2);padding:14px;position:relative;}
+.arch-cell::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.arch-a::after{background:var(--orange);}
+.arch-b::after{background:var(--blue);}
+.arch-c::after{background:var(--green);}
+.arch-mode{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;}
+.arch-fg{font-family:'DM Mono',monospace;font-size:0.5rem;color:var(--sub);margin-top:2px;}
+.arch-strat{font-size:0.62rem;margin-top:8px;line-height:1.7;color:var(--text);}
+.arch-strat strong{color:var(--gold);}
+
+/* CONTROLS */
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.panel{background:var(--bg2);border:1px solid var(--wire);}
+.ph{padding:10px 14px;border-bottom:1px solid var(--wire);font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:3px;color:var(--blue);}
+.pb{padding:14px;}
+
+.asset-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.chip{font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:2px;padding:5px 12px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.chip.on{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.04);}
+
+.grid-3c{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.grid-2c{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.lbl{font-family:'DM Mono',monospace;font-size:0.48rem;letter-spacing:2px;color:var(--sub);margin-bottom:4px;}
+select,input[type=range]{width:100%;background:var(--bg3);border:1px solid var(--wire);color:var(--text);font-family:'DM Mono',monospace;font-size:0.65rem;padding:7px 8px;}
+select:focus{outline:none;border-color:var(--blue);}
+
+/* FEES PANEL */
+.fees-box{background:rgba(255,170,0,0.04);border:1px solid rgba(255,170,0,0.15);padding:12px;font-family:'DM Mono',monospace;font-size:0.58rem;line-height:1.9;color:var(--gold);}
+
+/* RUN BTN */
+.run-wrap{margin-bottom:20px;}
+.run-btn{width:100%;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:6px;padding:18px;background:transparent;border:1px solid var(--green);color:var(--green);cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+.run-btn::before{content:'';position:absolute;inset:0;background:var(--green);opacity:0;transition:opacity 0.3s;}
+.run-btn:hover::before{opacity:0.05;}
+.run-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* PROGRESS */
+.prog-wrap{display:none;margin-bottom:20px;}
+.prog-hdr{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--sub);margin-bottom:6px;}
+.prog-bar{height:3px;background:var(--wire);}
+.prog-fill{height:100%;background:var(--green);transition:width 0.2s;width:0%;}
+.prog-msg{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--teal);margin-top:5px;min-height:18px;}
+
+/* RESULTS */
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.mode-result{background:var(--bg2);border:1px solid var(--wire);overflow:hidden;}
+.mr-hdr{padding:14px;border-bottom:1px solid var(--wire);position:relative;}
+.mr-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.mra::before{background:var(--orange);}
+.mrb::before{background:var(--blue);}
+.mrc::before{background:var(--green);}
+.mr-mode{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:4px;}
+.mr-verdict{font-family:'DM Mono',monospace;font-size:0.48rem;letter-spacing:2px;padding:3px 10px;border:1px solid;display:inline-block;margin-top:4px;}
+.v-ok{color:var(--green);border-color:rgba(0,255,136,0.3);}
+.v-warn{color:var(--gold);border-color:rgba(255,170,0,0.3);}
+.v-bad{color:var(--red);border-color:rgba(255,34,68,0.3);}
+
+.mr-metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--wire);}
+.mm{background:var(--bg3);padding:10px;}
+.mm-l{font-family:'DM Mono',monospace;font-size:0.45rem;letter-spacing:2px;color:var(--sub);margin-bottom:3px;}
+.mm-v{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:1px;}
+.mm-sub{font-size:0.48rem;color:var(--sub);margin-top:1px;}
+
+.mr-params{padding:12px;font-family:'DM Mono',monospace;font-size:0.52rem;line-height:1.8;border-top:1px solid var(--wire);}
+.mr-params strong{color:var(--text);}
+
+/* ASSET RESULTS TABLE */
+.asset-table-wrap{background:var(--bg2);border:1px solid var(--wire);margin-bottom:20px;}
+.asset-table{width:100%;border-collapse:collapse;}
+.asset-table th{font-family:'DM Mono',monospace;font-size:0.45rem;letter-spacing:2px;color:var(--sub);padding:8px 12px;border-bottom:1px solid var(--wire);text-align:left;font-weight:400;}
+.asset-table td{padding:9px 12px;border-bottom:1px solid rgba(15,32,53,0.8);font-size:0.62rem;}
+.asset-table tr:last-child td{border-bottom:none;}
+.asset-table tr:hover td{background:rgba(0,204,255,0.02);}
+
+/* EQUITY MINI CHARTS */
+.equity-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;}
+.eq-card{background:var(--bg2);border:1px solid var(--wire);padding:12px;}
+.eq-sym{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;margin-bottom:8px;}
+.eq-svg{width:100%;height:60px;}
+
+/* CONFIG OUTPUT */
+.cfg-out{background:var(--bg2);border:1px solid rgba(0,255,136,0.15);padding:20px;margin-bottom:20px;display:none;}
+.cfg-title{font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:3px;color:var(--green);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(0,255,136,0.1);}
+.cfg-code{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--green);line-height:2;white-space:pre-wrap;overflow-x:auto;}
+.copy-btn{margin-top:12px;font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:2px;padding:7px 16px;background:transparent;border:1px solid rgba(0,255,136,0.3);color:var(--green);cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{background:rgba(0,255,136,0.05);}
+
+/* LOG */
+.log-wrap{background:var(--bg2);border:1px solid var(--wire);padding:14px;}
+.log-title{font-family:'DM Mono',monospace;font-size:0.48rem;letter-spacing:3px;color:var(--sub);margin-bottom:10px;}
+.log-scroll{max-height:160px;overflow-y:auto;}
+.log-line{font-family:'DM Mono',monospace;font-size:0.55rem;padding:3px 0;border-bottom:1px solid rgba(15,32,53,0.5);display:flex;gap:10px;}
+.log-t{color:var(--muted);flex-shrink:0;min-width:70px;}
+
+@media(max-width:900px){
+  .arch,.controls,.results-grid{grid-template-columns:1fr;}
+  .equity-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="logo">APEX <em>BACKTEST</em> <span style="color:var(--sub);font-size:2rem;">V3</span></div>
+      <div class="logo-sub">1H · DATOS CONTINUOS 2023→2026 · 3 ESTRATEGIAS POR RÉGIMEN · FEES REALES · SIN LOOKAHEAD · WALK-FORWARD 70/30</div>
+    </div>
+    <div class="nav">
+      <a href="trading-system-v1.html">DASHBOARD</a>
+      <a href="agent.html">AGENTE</a>
+      <a href="analytics.html">ANALYTICS</a>
+      <a href="backtest-v3.html" class="act">BACKTEST</a>
+    </div>
+  </div>
+</div>
+
+<!-- ARQUITECTURA DE ESTRATEGIAS -->
+<div class="arch">
+  <div class="arch-cell arch-a">
+    <div class="arch-mode" style="color:var(--orange)">PÁNICO</div>
+    <div class="arch-fg">F&G &lt; 25 · Miedo extremo</div>
+    <div class="arch-strat">
+      <strong>Trigger:</strong> RSI &lt; 30 + BB inferior<br>
+      <strong>Dirección:</strong> LONG (rebote)<br>
+      <strong>SL:</strong> 1×ATR · <strong>TP:</strong> 2×ATR<br>
+      <strong>Riesgo:</strong> 1.5% capital
+    </div>
+  </div>
+  <div class="arch-cell arch-b">
+    <div class="arch-mode" style="color:var(--blue)">NORMAL</div>
+    <div class="arch-fg">F&G 25–65 · Mercado mixto</div>
+    <div class="arch-strat">
+      <strong>Trigger:</strong> Pullback a EMA50 + RSI 40-55<br>
+      <strong>Dirección:</strong> LONG y SHORT según tendencia<br>
+      <strong>SL:</strong> 1×ATR · <strong>TP:</strong> 2×ATR<br>
+      <strong>Riesgo:</strong> 2% capital
+    </div>
+  </div>
+  <div class="arch-cell arch-c">
+    <div class="arch-mode" style="color:var(--green)">BULL</div>
+    <div class="arch-fg">F&G &gt; 65 · Codicia/Euforia</div>
+    <div class="arch-strat">
+      <strong>Trigger:</strong> RSI 45-65 + precio &gt; BB media<br>
+      <strong>Dirección:</strong> LONG momentum<br>
+      <strong>SL:</strong> 1×ATR · <strong>TP:</strong> 2.5×ATR<br>
+      <strong>Riesgo:</strong> 2% capital
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="panel">
+    <div class="ph">ACTIVOS Y CONFIGURACIÓN</div>
+    <div class="pb">
+      <div class="lbl" style="margin-bottom:8px;">ACTIVOS</div>
+      <div class="asset-chips" id="asset-chips">
+        <button class="chip on" data-a="BTCUSDT" onclick="toggleA(this)">BTC</button>
+        <button class="chip on" data-a="ETHUSDT" onclick="toggleA(this)">ETH</button>
+        <button class="chip on" data-a="SOLUSDT" onclick="toggleA(this)">SOL</button>
+        <button class="chip on" data-a="XRPUSDT" onclick="toggleA(this)">XRP</button>
+        <button class="chip on" data-a="LTCUSDT" onclick="toggleA(this)">LTC</button>
+        <button class="chip on" data-a="LINKUSDT" onclick="toggleA(this)">LINK</button>
+        <button class="chip on" data-a="BNBUSDT" onclick="toggleA(this)">BNB</button>
+      </div>
+
+      <div class="grid-3c" style="margin-bottom:10px;">
+        <div>
+          <div class="lbl">RSI PERÍODOS</div>
+          <select id="cfg-rsi">
+            <option value="6,9,14" selected>6, 9, 14</option>
+            <option value="6,7">6 y 7</option>
+            <option value="14">Solo 14</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">ATR SL MULT</div>
+          <select id="cfg-sl">
+            <option value="0.8,1.0,1.2" selected>0.8×, 1.0×, 1.2×</option>
+            <option value="1.0">Solo 1.0×</option>
+            <option value="0.8,1.0">0.8× y 1.0×</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">RSI UMBRAL PÁNICO</div>
+          <select id="cfg-thresh">
+            <option value="28,30,33" selected>28, 30, 33</option>
+            <option value="30">Solo 30</option>
+            <option value="25,30,35">25, 30, 35</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2c">
+        <div>
+          <div class="lbl">SPLIT IN/OUT-OF-SAMPLE</div>
+          <select id="cfg-split">
+            <option value="0.7" selected>70% / 30%</option>
+            <option value="0.8">80% / 20%</option>
+            <option value="0.6">60% / 40%</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">MÍNIMO TRADES IS</div>
+          <select id="cfg-min">
+            <option value="10" selected>10 trades</option>
+            <option value="15">15 trades</option>
+            <option value="20">20 trades</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">COSTOS REALES SIMULADOS</div>
+    <div class="pb">
+      <div class="fees-box">
+        BYBIT FUTUROS PERPETUOS — COSTOS POR OPERACIÓN:<br><br>
+        · Fee taker entrada:  0.06% del nocional<br>
+        · Fee taker salida:   0.06% del nocional<br>
+        · Slippage estimado:  0.05% × 2 lados<br>
+        · TOTAL FIJO:         0.22% por operación<br><br>
+        FUNDING RATE (variable):<br>
+        · 0.01% cada 8hs que mantenés la posición<br>
+        · Trade de 24hs = 3 períodos = 0.03% extra<br>
+        · Trade de 48hs = 6 períodos = 0.06% extra<br><br>
+        APALANCAMIENTO: ×2 (futuros perpetuos)
+      </div>
+
+      <div style="margin-top:12px;font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--sub);line-height:1.9;">
+        PERÍODO DE DATOS: ENE 2023 → MAR 2026<br>
+        TIMEFRAME: 1 hora (~26,000 velas/activo)<br>
+        ENTRADA: open vela siguiente (sin lookahead)<br>
+        F&G: estimado por período según historial real
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RUN -->
+<div class="run-wrap">
+  <button class="run-btn" id="run-btn" onclick="runBacktest()">EJECUTAR BACKTEST COMPLETO</button>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap" id="prog-wrap">
+  <div class="prog-hdr">
+    <span id="prog-label">INICIANDO</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="prog-msg" id="prog-msg"></div>
+</div>
+
+<!-- RESULTADOS POR MODO -->
+<div id="results-section" style="display:none;">
+  <div style="font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:3px;color:var(--blue);margin-bottom:14px;">RESULTADOS POR ESTRATEGIA</div>
+  <div class="results-grid" id="mode-results"></div>
+
+  <!-- TABLA POR ACTIVO -->
+  <div class="asset-table-wrap" id="asset-table-wrap">
+    <div class="ph">DETALLE POR ACTIVO</div>
+    <table class="asset-table">
+      <thead>
+        <tr>
+          <th>ACTIVO</th>
+          <th>MODO</th>
+          <th>PF IS</th>
+          <th>PF OOS</th>
+          <th>EV/trade</th>
+          <th>WIN RATE</th>
+          <th>TRADES</th>
+          <th>DD MÁX</th>
+          <th>RETORNO</th>
+          <th>VEREDICTO</th>
+          <th>PARAMS</th>
+        </tr>
+      </thead>
+      <tbody id="asset-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- MINI EQUITY CHARTS -->
+  <div style="font-family:'DM Mono',monospace;font-size:0.52rem;letter-spacing:3px;color:var(--blue);margin-bottom:12px;">EQUITY CURVES POR ACTIVO (IN-SAMPLE + OUT-OF-SAMPLE)</div>
+  <div class="equity-row" id="equity-charts"></div>
+
+  <!-- CONFIG OUTPUT -->
+  <div class="cfg-out" id="cfg-out">
+    <div class="cfg-title">CONFIG VALIDADA — LISTA PARA EL WORKER</div>
+    <div class="cfg-code" id="cfg-code"></div>
+    <button class="copy-btn" onclick="copyConfig()">COPIAR CONFIG</button>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="log-wrap">
+  <div class="log-title">LOG DEL SISTEMA</div>
+  <div class="log-scroll" id="log-scroll"></div>
+</div>
+
+</div><!-- /page -->
+<script>
+// ═══════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════
+const WORKER = 'https://apex-agent.josepsanz2000.workers.dev';
+const CAPITAL_INICIAL = 100;
+const LEVERAGE = 2;
+const FEE_TOTAL = 0.0022;      // 0.22% por operación completa
+const FUNDING_PER_8H = 0.0001; // 0.01% cada 8hs
+const FUNDING_INTERVAL_H = 8;
+
+// F&G histórico estimado por mes (basado en datos reales de alternative.me)
+const FG_MONTHLY = {
+  '2023-01':25,'2023-02':55,'2023-03':58,'2023-04':63,'2023-05':55,
+  '2023-06':55,'2023-07':60,'2023-08':40,'2023-09':42,'2023-10':53,
+  '2023-11':65,'2023-12':72,
+  '2024-01':70,'2024-02':72,'2024-03':78,'2024-04':68,'2024-05':65,
+  '2024-06':60,'2024-07':65,'2024-08':33,'2024-09':45,'2024-10':62,
+  '2024-11':78,'2024-12':72,
+  '2025-01':38,'2025-02':29,'2025-03':45,'2025-04':50,'2025-05':55,
+  '2025-06':58,'2025-07':55,'2025-08':42,'2025-09':48,'2025-10':40,
+  '2025-11':28,'2025-12':32,
+  '2026-01':22,'2026-02':19,'2026-03':23,
+};
+
+function getFG(timestampMs) {
+  const d = new Date(timestampMs);
+  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  return FG_MONTHLY[key] || 50;
+}
+
+function getMacroMode(fg) {
+  if(fg < 15) return 'CAPITULACION';
+  if(fg < 25) return 'PANICO';
+  if(fg < 65) return 'NORMAL';
+  if(fg < 80) return 'BULL';
+  return 'EUFORIA';
+}
+
+// ═══════════════════════════════════════════════════
+// ESTADO UI
+// ═══════════════════════════════════════════════════
+let selAssets = new Set(['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','LTCUSDT','LINKUSDT','BNBUSDT']);
+let logs = [];
+let finalConfig = {};
+
+function toggleA(el) {
+  el.classList.toggle('on');
+  const a = el.dataset.a;
+  selAssets.has(a) ? selAssets.delete(a) : selAssets.add(a);
+}
+
+// ═══════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════
+function log(text, color='var(--sub)') {
+  const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.unshift({t,text,color});
+  if(logs.length>100) logs.pop();
+  document.getElementById('log-scroll').innerHTML = logs.slice(0,30).map(l=>
+    `<div class="log-line"><span class="log-t">${l.t}</span><span style="color:${l.color}">${l.text}</span></div>`
+  ).join('');
+}
+
+function setProgress(pct, label, msg) {
+  document.getElementById('prog-fill').style.width = Math.round(pct)+'%';
+  document.getElementById('prog-pct').textContent = Math.round(pct)+'%';
+  if(label) document.getElementById('prog-label').textContent = label;
+  if(msg)   document.getElementById('prog-msg').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════
+// FETCH VELAS — datos continuos vía worker
+// ═══════════════════════════════════════════════════
+async function fetchAllCandles(symbol, startMs, endMs) {
+  const all = [];
+  let cur = startMs;
+  while(cur < endMs) {
+    const url = `${WORKER}/klines?symbol=${symbol}&interval=1h&startTime=${cur}&endTime=${endMs}&limit=1000`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(!Array.isArray(data)||data.length===0) break;
+    for(const k of data) all.push({
+      t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5]
+    });
+    cur = data[data.length-1][0] + 3600001; // +1h+1ms
+    if(data.length < 1000) break;
+    await new Promise(r=>setTimeout(r,100));
+  }
+  return all;
+}
+
+// ═══════════════════════════════════════════════════
+// INDICADORES
+// ═══════════════════════════════════════════════════
+function ema(arr, p) {
+  const k=2/(p+1); let e=[arr[0]];
+  for(let i=1;i<arr.length;i++) e.push(arr[i]*k+e[i-1]*(1-k));
+  return e;
+}
+function rsi(arr, p) {
+  let g=[],l=[];
+  for(let i=1;i<arr.length;i++){const d=arr[i]-arr[i-1];g.push(d>0?d:0);l.push(d<0?-d:0);}
+  let ag=g.slice(0,p).reduce((a,b)=>a+b,0)/p, al=l.slice(0,p).reduce((a,b)=>a+b,0)/p;
+  const r=[...Array(p+1).fill(null)];
+  for(let i=p;i<g.length;i++){ag=(ag*(p-1)+g[i])/p;al=(al*(p-1)+l[i])/p;r.push(al===0?100:100-100/(1+ag/al));}
+  return r;
+}
+function bb(arr, p=20, m=2) {
+  return arr.map((_,i)=>{
+    if(i<p-1)return{u:null,l:null,mid:null};
+    const sl=arr.slice(i-p+1,i+1),mean=sl.reduce((a,b)=>a+b,0)/p;
+    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/p);
+    return{u:mean+m*std,l:mean-m*std,mid:mean};
+  });
+}
+function atr(candles, p=14) {
+  const tr=candles.map((c,i)=>i===0?c.h-c.l:Math.max(c.h-c.l,Math.abs(c.h-candles[i-1].c),Math.abs(c.l-candles[i-1].c)));
+  const a=[tr[0]];
+  for(let i=1;i<tr.length;i++) a.push((a[i-1]*(p-1)+tr[i])/p);
+  return a;
+}
+function vwap(candles) {
+  let cv=0,vol=0;
+  return candles.map(c=>{const tp=(c.h+c.l+c.c)/3;cv+=tp*c.v;vol+=c.v;return vol>0?cv/vol:tp;});
+}
+
+// ═══════════════════════════════════════════════════
+// SEÑAL POR ESTRATEGIA
+// ═══════════════════════════════════════════════════
+function getSignal(i, candles, inds, mode, rsiP, rsiThresh, slMult) {
+  // Entrada en open de vela SIGUIENTE — sin lookahead
+  if(i >= candles.length - 1) return null;
+  if(inds.rsi[i] == null || !inds.bb[i]?.l || !inds.atr[i]) return null;
+
+  const c      = candles[i];
+  const entry  = candles[i+1].o; // open vela siguiente
+  const atrNow = inds.atr[i];
+  const rsiNow = inds.rsi[i];
+  const bbNow  = inds.bb[i];
+  const ema50  = inds.ema50[i];
+  const ema200 = inds.ema200 ? inds.ema200[i] : null;
+  const vwapNow= inds.vwap[i];
+
+  let side = null;
+
+  if(mode === 'PANICO' || mode === 'CAPITULACION') {
+    // ESTRATEGIA A: RSI sobreventa + BB inferior → LONG rebote
+    if(rsiNow < rsiThresh && c.c <= bbNow.l * 1.008) side = 'LONG';
+
+  } else if(mode === 'NORMAL') {
+    // ESTRATEGIA B: pullback a EMA50
+    if(!ema50) return null;
+    const aboveEMA = c.c > ema50;
+    const nearEMA  = Math.abs(c.c - ema50) / c.c < 0.015; // dentro del 1.5% de EMA50
+    const rsiMid   = rsiNow >= 35 && rsiNow <= 55; // RSI en zona media
+
+    if(aboveEMA && nearEMA && rsiMid) side = 'LONG';
+    else if(!aboveEMA && nearEMA && rsiMid) side = 'SHORT';
+
+  } else if(mode === 'BULL' || mode === 'EUFORIA') {
+    // ESTRATEGIA C: momentum alcista
+    if(!ema50) return null;
+    const trending = c.c > ema50;
+    const rsiMomentum = rsiNow >= 45 && rsiNow <= 65;
+    const aboveMid = c.c > bbNow.mid;
+
+    if(trending && rsiMomentum && aboveMid) side = 'LONG';
+  }
+
+  if(!side) return null;
+
+  const sl = side === 'LONG' ? entry - atrNow*slMult : entry + atrNow*slMult;
+  const tpMult = mode === 'BULL' ? 2.5 : 2.0;
+  const tp = side === 'LONG' ? entry + atrNow*tpMult : entry - atrNow*tpMult;
+
+  return { side, entry, sl, tp, atrNow, slMult, tpMult };
+}
+
+// ═══════════════════════════════════════════════════
+// SIMULAR — con todos los costos reales
+// ═══════════════════════════════════════════════════
+function simulate(candles, rsiP, slMult, rsiThresh, startIdx, endIdx) {
+  if(endIdx - startIdx < 100) return null;
+
+  const closes = candles.map(c=>c.c);
+  const inds = {
+    rsi:   rsi(closes, rsiP),
+    bb:    bb(closes),
+    atr:   atr(candles),
+    ema50: ema(closes, 50),
+    ema200:closes.length >= 200 ? ema(closes, 200) : null,
+    vwap:  vwap(candles),
+  };
+
+  let capital = CAPITAL_INICIAL;
+  let maxCapital = CAPITAL_INICIAL;
+  let maxDD = 0;
+  const trades = [];
+  const equityCurve = [CAPITAL_INICIAL];
+  let openTrade = null;
+
+  for(let i = Math.max(startIdx, 60); i < endIdx; i++) {
+    const c = candles[i];
+    const fg = getFG(c.t);
+    const mode = getMacroMode(fg);
+
+    // ── CERRAR ──────────────────────────────────────
+    if(openTrade) {
+      let closed = false, exitP = c.c, reason = '';
+
+      if(openTrade.side === 'LONG') {
+        if(c.l <= openTrade.sl) { exitP = openTrade.sl; reason = 'SL'; closed = true; }
+        else if(c.h >= openTrade.tp) { exitP = openTrade.tp; reason = 'TP'; closed = true; }
+      } else {
+        if(c.h >= openTrade.sl) { exitP = openTrade.sl; reason = 'SL'; closed = true; }
+        else if(c.l <= openTrade.tp) { exitP = openTrade.tp; reason = 'TP'; closed = true; }
+      }
+      // Timeout 48 velas (48hs en 1H)
+      if(!closed && (i - openTrade.ei) >= 48) { exitP = c.c; reason = 'TO'; closed = true; }
+
+      if(closed) {
+        // PnL con leverage
+        const stopPctR = Math.abs(openTrade.entry - openTrade.sl) / openTrade.entry;
+        let movPct = openTrade.side === 'LONG'
+          ? (exitP - openTrade.entry) / openTrade.entry
+          : (openTrade.entry - exitP) / openTrade.entry;
+        movPct *= LEVERAGE;
+        const maxL = stopPctR * LEVERAGE;
+        const maxG = stopPctR * openTrade.tpMult * LEVERAGE;
+        movPct = Math.max(-maxL, Math.min(maxG, movPct));
+
+        // PnL bruto
+        const posSize = openTrade.riskAmt / (stopPctR * LEVERAGE);
+        const pnlBruto = openTrade.riskAmt * (movPct / maxL);
+
+        // Fees + slippage
+        const fees = posSize * FEE_TOTAL;
+
+        // Funding rate acumulado
+        const horas = (i - openTrade.ei); // velas de 1H = horas
+        const periods = Math.floor(horas / FUNDING_INTERVAL_H);
+        const funding = posSize * FUNDING_PER_8H * periods;
+
+        const pnlNeto = pnlBruto - fees - funding;
+
+        capital += pnlNeto;
+        capital = Math.max(0, capital);
+        maxCapital = Math.max(maxCapital, capital);
+        maxDD = Math.max(maxDD, (maxCapital - capital) / maxCapital * 100);
+
+        trades.push({
+          side: openTrade.side, pnl: pnlNeto, reason, mode: openTrade.mode,
+          pnlBruto, fees, funding, horas,
+        });
+        equityCurve.push(capital);
+        openTrade = null;
+      }
+    }
+
+    // ── ABRIR ───────────────────────────────────────
+    if(!openTrade && capital > 0 && maxDD < 20) {
+      const riskPct = mode === 'PANICO' ? 0.015 : 0.02;
+      const sig = getSignal(i, candles, inds, mode, rsiP, rsiThresh, slMult);
+      if(!sig) continue;
+
+      const riskAmt = capital * riskPct;
+      const posSize = riskAmt / (Math.abs(sig.entry - sig.sl) / sig.entry * LEVERAGE);
+
+      // Fee de entrada inmediata
+      capital -= posSize * (FEE_TOTAL / 2); // mitad al entrar
+
+      openTrade = {
+        side: sig.side, entry: sig.entry, sl: sig.sl, tp: sig.tp,
+        riskAmt, tpMult: sig.tpMult, mode, ei: i+1,
+      };
+    }
+  }
+
+  const n = trades.length;
+  if(n < 3) return null;
+
+  const wins = trades.filter(t=>t.pnl>0);
+  const loss = trades.filter(t=>t.pnl<=0);
+  const sumW = wins.reduce((a,t)=>a+t.pnl,0);
+  const sumL = loss.reduce((a,t)=>a+Math.abs(t.pnl),0);
+  const pf   = sumL>0 ? sumW/sumL : sumW>0 ? 99 : 0;
+  const wr   = n>0 ? wins.length/n*100 : 0;
+  const ev   = n>0 ? (sumW - sumL) / n : 0;
+  const days = (candles[endIdx-1].t - candles[Math.max(startIdx,60)].t) / 86400000;
+  const daily = days > 0 ? (Math.pow(capital/CAPITAL_INICIAL, 1/days) - 1) * 100 : 0;
+  const tpC = trades.filter(t=>t.reason==='TP').length;
+  const slC = trades.filter(t=>t.reason==='SL').length;
+  const toC = trades.filter(t=>t.reason==='TO').length;
+  const avgFees = trades.length ? trades.reduce((a,t)=>a+t.fees,0)/trades.length : 0;
+  const avgFund = trades.length ? trades.reduce((a,t)=>a+t.funding,0)/trades.length : 0;
+  const avgH    = trades.length ? trades.reduce((a,t)=>a+t.horas,0)/trades.length : 0;
+
+  // Trades por modo
+  const byMode = {};
+  for(const t of trades) { if(!byMode[t.mode]) byMode[t.mode]=0; byMode[t.mode]++; }
+
+  return { capital, pf, wr, ev, daily, maxDD, n, tpC, slC, toC, equityCurve, byMode, avgFees, avgFund, avgH };
+}
+
+// ═══════════════════════════════════════════════════
+// BACKTEST PRINCIPAL
+// ═══════════════════════════════════════════════════
+async function runBacktest() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '⏳ CARGANDO DATOS...';
+  document.getElementById('prog-wrap').style.display = 'block';
+  document.getElementById('results-section').style.display = 'none';
+  finalConfig = {}; logs = [];
+
+  const rsiOpts    = document.getElementById('cfg-rsi').value.split(',').map(Number);
+  const slOpts     = document.getElementById('cfg-sl').value.split(',').map(Number);
+  const threshOpts = document.getElementById('cfg-thresh').value.split(',').map(Number);
+  const split      = parseFloat(document.getElementById('cfg-split').value);
+  const minTrades  = parseInt(document.getElementById('cfg-min').value);
+  const assets     = [...selAssets];
+
+  // Período: ENE 2023 → MAR 2026
+  const startMs = Date.UTC(2023,0,1);
+  const endMs   = Date.UTC(2026,2,16);
+
+  log(`🚀 Backtest v3 iniciado · ${assets.length} activos · 1H · ENE2023→MAR2026`, 'var(--green)');
+  log(`⚙️ Combinaciones: ${rsiOpts.length}×${slOpts.length}×${threshOpts.length} = ${rsiOpts.length*slOpts.length*threshOpts.length}/activo`, 'var(--blue)');
+  log(`💰 Costos: fee 0.22% + funding 0.01%/8h + slippage incluido`, 'var(--gold)');
+
+  const allResults = [];
+  const modeStats = { PANICO:{best:null}, NORMAL:{best:null}, BULL:{best:null} };
+
+  for(let ai = 0; ai < assets.length; ai++) {
+    const sym = assets[ai];
+    setProgress(ai/assets.length*40, `DESCARGANDO ${sym}`, `${ai+1}/${assets.length}`);
+
+    log(`📊 ${sym}: descargando datos ENE2023→MAR2026 en 1H...`, 'var(--gold)');
+    let candles;
+    try {
+      candles = await fetchAllCandles(sym, startMs, endMs);
+      log(`✅ ${sym}: ${candles.length} velas descargadas (${(candles.length/24).toFixed(0)} días)`, 'var(--green)');
+    } catch(e) {
+      log(`❌ ${sym}: error descargando — ${e.message}`, 'var(--red)');
+      continue;
+    }
+
+    if(candles.length < 500) {
+      log(`⚠️ ${sym}: insuficientes velas`, 'var(--gold)');
+      continue;
+    }
+
+    // Split IS/OOS
+    const splitIdx = Math.floor(candles.length * split);
+    log(`📐 ${sym}: IS hasta vela ${splitIdx} · OOS desde ${splitIdx}`, 'var(--sub)');
+
+    // Optimizar en IS
+    let bestIS = null, bestParams = null;
+    let tested = 0;
+    const totalCombos = rsiOpts.length * slOpts.length * threshOpts.length;
+
+    for(const rsiP of rsiOpts) {
+      for(const slMult of slOpts) {
+        for(const thresh of threshOpts) {
+          const res = simulate(candles, rsiP, slMult, thresh, 0, splitIdx);
+          if(res && res.n >= minTrades && res.pf > 0.8 && res.ev > -0.5) {
+            const score = res.pf * (res.ev + 1) * (1 - res.maxDD/100);
+            if(!bestIS || score > (bestIS.pf*(bestIS.ev+1)*(1-bestIS.maxDD/100))) {
+              bestIS = res;
+              bestParams = { rsiP, slMult, thresh };
+            }
+          }
+          tested++;
+          if(tested % 3 === 0) {
+            setProgress(
+              40 + (ai/assets.length*50) + (tested/totalCombos * 50/assets.length),
+              `OPTIMIZANDO ${sym}`,
+              `${tested}/${totalCombos} combinaciones · mejor PF: ${bestIS ? bestIS.pf.toFixed(2) : '—'}`
+            );
+            await new Promise(r=>setTimeout(r,0));
+          }
+        }
+      }
+    }
+
+    if(!bestIS) {
+      log(`⚠️ ${sym}: sin parámetros viables en in-sample`, 'var(--gold)');
+      allResults.push({ sym, verdict:'SKIP', is:null, oos:null, params:null });
+      continue;
+    }
+
+    log(`✅ ${sym} IS: PF:${bestIS.pf.toFixed(2)} EV:$${bestIS.ev.toFixed(2)} N:${bestIS.n} DD:${bestIS.maxDD.toFixed(1)}%`, 'var(--green)');
+
+    // Validar en OOS con parámetros congelados
+    const oos = simulate(candles, bestParams.rsiP, bestParams.slMult, bestParams.thresh, splitIdx, candles.length);
+
+    if(oos) {
+      log(`${oos.pf>=1.2?'✅':'⚠️'} ${sym} OOS: PF:${oos.pf.toFixed(2)} EV:$${oos.ev.toFixed(2)} N:${oos.n} DD:${oos.maxDD.toFixed(1)}%`, oos.pf>=1.2?'var(--green)':'var(--gold)');
+    } else {
+      log(`⚠️ ${sym} OOS: insuficientes trades`, 'var(--gold)');
+    }
+
+    // Veredicto
+    const deg = oos && bestIS.pf > 0 ? (bestIS.pf - oos.pf) / bestIS.pf * 100 : 100;
+    const DEPLOY  = oos && oos.n >= minTrades && oos.pf >= 1.2 && oos.ev > 0 && deg < 50;
+    const CAUTION = oos && oos.n >= minTrades && oos.pf >= 1.0 && deg < 70;
+    const verdict = DEPLOY ? 'DEPLOY' : CAUTION ? 'CAUTION' : 'REJECT';
+
+    if(DEPLOY) {
+      finalConfig[sym] = { ...bestParams, isRes:bestIS, oosRes:oos };
+      log(`🏆 ${sym}: DEPLOY · degradación ${deg.toFixed(0)}%`, 'var(--green)');
+    }
+
+    allResults.push({ sym, verdict, is:bestIS, oos, params:bestParams, candles, splitIdx });
+  }
+
+  // Render resultados
+  renderResults(allResults, split);
+  generateConfig(allResults);
+
+  setProgress(100, 'COMPLETADO', `${Object.keys(finalConfig).length}/${assets.length} activos DEPLOY`);
+  log(`🏁 Backtest completado · ${Object.keys(finalConfig).length} activos aprobados`, 'var(--green)');
+  btn.disabled = false;
+  btn.textContent = 'EJECUTAR BACKTEST COMPLETO';
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function renderResults(results, split) {
+  document.getElementById('results-section').style.display = 'block';
+
+  // Stats por modo global
+  const modeData = { PANICO:{n:0,pf:0,wr:0,ev:0,count:0}, NORMAL:{n:0,pf:0,wr:0,ev:0,count:0}, BULL:{n:0,pf:0,wr:0,ev:0,count:0} };
+  for(const r of results) {
+    if(!r.is) continue;
+    const bm = r.is.byMode || {};
+    const maxMode = Object.entries(bm).sort((a,b)=>b[1]-a[1])[0];
+    const mode = maxMode ? (maxMode[0]==='CAPITULACION'?'PANICO':maxMode[0]) : 'NORMAL';
+    const m = modeData[mode] || modeData.NORMAL;
+    m.n += r.is.n; m.pf += r.is.pf; m.wr += r.is.wr; m.ev += r.is.ev; m.count++;
+  }
+
+  const modeHTML = ['PANICO','NORMAL','BULL'].map((mode,idx) => {
+    const m = modeData[mode];
+    const avgPF = m.count > 0 ? m.pf/m.count : 0;
+    const avgWR = m.count > 0 ? m.wr/m.count : 0;
+    const avgEV = m.count > 0 ? m.ev/m.count : 0;
+    const cls  = ['mra','mrb','mrc'][idx];
+    const col  = ['var(--orange)','var(--blue)','var(--green)'][idx];
+    const verd = avgPF>=1.5?'ROBUSTO':avgPF>=1.2?'VIABLE':'DÉBIL';
+    const vc   = avgPF>=1.5?'v-ok':avgPF>=1.2?'v-warn':'v-bad';
+    const strats = {PANICO:'RSI<30+BB → LONG rebote',NORMAL:'Pullback EMA50 + RSI 40-55',BULL:'Momentum RSI 45-65 alcista'};
+    return `<div class="mode-result">
+      <div class="mr-hdr ${cls}">
+        <div class="mr-mode" style="color:${col}">${mode}</div>
+        <div class="mr-verdict ${vc}">${verd}</div>
+      </div>
+      <div class="mr-metrics">
+        <div class="mm"><div class="mm-l">PROFIT FACTOR</div><div class="mm-v" style="color:${avgPF>=1.5?'var(--green)':avgPF>=1.2?'var(--gold)':'var(--red)'}">${avgPF.toFixed(2)}</div><div class="mm-sub">promedio activos</div></div>
+        <div class="mm"><div class="mm-l">WIN RATE</div><div class="mm-v" style="color:${avgWR>=50?'var(--green)':'var(--gold)'}">${avgWR.toFixed(0)}%</div><div class="mm-sub">trades ganadores</div></div>
+        <div class="mm"><div class="mm-l">EV / TRADE</div><div class="mm-v" style="color:${avgEV>0?'var(--green)':'var(--red)'}">${avgEV>=0?'+':''}$${avgEV.toFixed(2)}</div><div class="mm-sub">con fees incluidos</div></div>
+        <div class="mm"><div class="mm-l">ACTIVOS</div><div class="mm-v" style="color:var(--blue)">${m.count}</div><div class="mm-sub">con datos en este modo</div></div>
+      </div>
+      <div class="mr-params">Estrategia: <strong>${strats[mode]}</strong></div>
+    </div>`;
+  }).join('');
+  document.getElementById('mode-results').innerHTML = modeHTML;
+
+  // Tabla por activo
+  const pfC = v => v>=1.5?'var(--green)':v>=1.2?'var(--gold)':'var(--red)';
+  const tbody = results.map(r => {
+    if(!r.is) return `<tr><td><strong>${r.sym.replace('USDT','')}</strong></td><td colspan="10" style="color:var(--red)">SIN DATOS SUFICIENTES</td></tr>`;
+    const vc = r.verdict==='DEPLOY'?'v-ok':r.verdict==='CAUTION'?'v-warn':'v-bad';
+    const deg = r.oos && r.is.pf>0 ? ((r.is.pf-r.oos.pf)/r.is.pf*100).toFixed(0) : '—';
+    const maxMode = r.is.byMode ? Object.entries(r.is.byMode).sort((a,b)=>b[1]-a[1])[0] : null;
+    return `<tr>
+      <td><strong style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;">${r.sym.replace('USDT','')}</strong></td>
+      <td style="font-size:0.52rem;color:var(--sub)">${maxMode?maxMode[0]:'—'}</td>
+      <td style="color:${pfC(r.is.pf)}">${r.is.pf.toFixed(2)}</td>
+      <td style="color:${r.oos?pfC(r.oos.pf):'var(--muted)'}">${r.oos?r.oos.pf.toFixed(2):'—'}</td>
+      <td style="color:${r.is.ev>0?'var(--green)':'var(--red)'}">${r.is.ev>=0?'+':''}$${r.is.ev.toFixed(2)}</td>
+      <td style="color:${r.is.wr>=50?'var(--green)':'var(--gold)'}">${r.is.wr.toFixed(0)}%</td>
+      <td style="color:var(--blue)">${r.is.n} IS / ${r.oos?r.oos.n:'—'} OOS</td>
+      <td style="color:${r.is.maxDD<10?'var(--green)':r.is.maxDD<20?'var(--gold)':'var(--red)'}">${r.is.maxDD.toFixed(1)}%</td>
+      <td style="color:${r.is.daily>0?'var(--green)':'var(--red)'}">${r.is.daily>=0?'+':''}${r.is.daily.toFixed(2)}%/d</td>
+      <td><span class="mr-verdict ${vc}" style="font-size:0.45rem;">${r.verdict}</span></td>
+      <td style="font-size:0.5rem;color:var(--sub)">RSI${r.params?.rsiP} SL${r.params?.slMult}× T${r.params?.thresh}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('asset-tbody').innerHTML = tbody;
+
+  // Mini equity charts
+  const eqHTML = results.filter(r=>r.is).map(r => {
+    const curve = r.is.equityCurve;
+    if(!curve||curve.length<2) return '';
+    const min = Math.min(...curve)*0.98, max = Math.max(...curve)*1.02;
+    const W=200,H=60,PAD=8;
+    const px=i=>PAD+(i/(curve.length-1))*(W-2*PAD);
+    const py=v=>H-PAD-((v-min)/(max-min||1))*(H-2*PAD);
+    let path='';
+    for(let i=0;i<curve.length;i++) path+=(i===0?'M':'L')+` ${px(i).toFixed(1)} ${py(curve[i]).toFixed(1)}`;
+    const last=curve[curve.length-1];
+    const col=last>=CAPITAL_INICIAL?'var(--green)':'var(--red)';
+    const pnlPct=((last-CAPITAL_INICIAL)/CAPITAL_INICIAL*100).toFixed(1);
+    const vc=r.verdict==='DEPLOY'?'var(--green)':r.verdict==='CAUTION'?'var(--gold)':'var(--red)';
+    return `<div class="eq-card">
+      <div class="eq-sym" style="color:${vc}">${r.sym.replace('USDT','')}</div>
+      <svg class="eq-svg" viewBox="0 0 ${W} ${H}">
+        <line x1="${PAD}" y1="${py(CAPITAL_INICIAL).toFixed(1)}" x2="${W-PAD}" y2="${py(CAPITAL_INICIAL).toFixed(1)}" stroke="var(--wire)" stroke-width="1" stroke-dasharray="3,3"/>
+        <path d="${path}" fill="none" stroke="${col}" stroke-width="1.5"/>
+        <circle cx="${px(curve.length-1).toFixed(1)}" cy="${py(last).toFixed(1)}" r="3" fill="${col}"/>
+      </svg>
+      <div style="font-family:'DM Mono',monospace;font-size:0.5rem;color:${col};margin-top:4px;">${pnlPct>=0?'+':''}${pnlPct}% IS</div>
+      ${r.oos?`<div style="font-size:0.48rem;color:var(--sub);">OOS PF: ${r.oos.pf.toFixed(2)}</div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('equity-charts').innerHTML = eqHTML;
+}
+
+function generateConfig(results) {
+  const deployed = results.filter(r=>r.verdict==='DEPLOY'&&r.params);
+  if(!deployed.length) return;
+
+  const lines = [
+    '// ═══════════════════════════════════════════════════════',
+    '// APEX BACKTEST v3 — CONFIG VALIDADA',
+    `// ${new Date().toLocaleString('es-AR')}`,
+    '// 1H · Fees 0.22% · Funding 0.01%/8h · Walk-Forward 70/30',
+    '// ═══════════════════════════════════════════════════════',
+    'const ASSETS = {',
+  ];
+
+  for(const r of deployed) {
+    const {sym,params,is:isR,oos} = r;
+    lines.push(`  // ${sym.replace('USDT','')} · IS PF:${isR.pf.toFixed(2)} · OOS PF:${oos?oos.pf.toFixed(2):'—'} · EV:$${isR.ev.toFixed(2)}`);
+    lines.push(`  ${sym}: {`);
+    lines.push(`    tier: 1,`);
+    lines.push(`    rsiPeriod:  ${params.rsiP},`);
+    lines.push(`    rsiThresh:  ${params.thresh},   // RSI umbral entrada`);
+    lines.push(`    slAtrMult:  ${params.slMult},   // SL = ${params.slMult}×ATR`);
+    lines.push(`    tpAtrMult:  2.0,               // TP = 2.0×ATR`);
+    lines.push(`    macdFast:   6, macdSlow: 13, macdSig: 5,`);
+    lines.push(`    indicators: ['rsi','bb','atr','ema50'],`);
+    lines.push(`  },`);
+  }
+  lines.push('};');
+
+  document.getElementById('cfg-code').textContent = lines.join('\n');
+  document.getElementById('cfg-out').style.display = 'block';
+}
+
+function copyConfig() {
+  navigator.clipboard.writeText(document.getElementById('cfg-code').textContent)
+    .then(()=>log('📋 Config copiada','var(--green)'));
+}
+
+log('Backtest v3 listo · 1H · ENE2023→MAR2026 · fees reales · walk-forward 70/30','var(--blue)');
+</script>
+</body>
+</html>
