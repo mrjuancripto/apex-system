@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>APEX SIGNAL EXPLORER</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02060c;--bg2:#050c18;--bg3:#080f1e;--bg4:#0c1428;
+  --wire:#0d1e30;--dim:#162b40;--muted:#1e3a55;
+  --text:#a8c8e8;--sub:#3a6080;--faint:#254060;
+  --green:#00ff99;--red:#ff2255;--gold:#ffbb00;
+  --blue:#00bbff;--cyan:#00ffee;--purple:#cc44ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:100vh;}
+
+.page{max-width:1600px;margin:0 auto;padding:20px 14px;}
+
+/* HEADER */
+.hdr{padding-bottom:16px;border-bottom:1px solid var(--wire);margin-bottom:20px;}
+.logo{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:4px;line-height:1;color:var(--text);}
+.logo em{color:var(--cyan);font-style:normal;}
+.logo-sub{font-size:0.52rem;letter-spacing:3px;color:var(--sub);margin-top:6px;}
+.nav{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.nav a{font-size:0.5rem;letter-spacing:2px;padding:4px 10px;border:1px solid var(--wire);color:var(--sub);text-decoration:none;transition:all 0.2s;}
+.nav a:hover,.nav a.act{border-color:var(--cyan);color:var(--cyan);}
+
+/* CONTROLS */
+.controls{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px;}
+.panel{background:var(--bg2);border:1px solid var(--wire);}
+.ph{padding:9px 14px;border-bottom:1px solid var(--wire);font-size:0.48rem;letter-spacing:3px;color:var(--blue);}
+.pb{padding:14px;}
+
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.lbl{font-size:0.46rem;letter-spacing:2px;color:var(--sub);margin-bottom:4px;}
+select{width:100%;background:var(--bg3);border:1px solid var(--wire);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;padding:7px 8px;}
+select:focus{outline:none;border-color:var(--blue);}
+
+/* ASSET CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.chip{font-size:0.52rem;letter-spacing:2px;padding:4px 10px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,238,0.04);}
+
+/* TF CHIPS */
+.tf-chips{display:flex;gap:6px;margin-bottom:12px;}
+.tfc{font-size:0.52rem;letter-spacing:2px;padding:5px 14px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.tfc.on{border-color:var(--gold);color:var(--gold);background:rgba(255,187,0,0.04);}
+
+/* INFO BOX */
+.info-box{background:rgba(0,255,238,0.03);border:1px solid rgba(0,255,238,0.1);padding:12px;font-size:0.55rem;line-height:2;color:var(--cyan);}
+
+/* RUN */
+.run-btn{width:100%;font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:5px;padding:16px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.3s;margin-bottom:16px;}
+.run-btn:hover{background:rgba(0,255,238,0.04);}
+.run-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* PROGRESS */
+.prog{display:none;margin-bottom:16px;}
+.prog-hdr{display:flex;justify-content:space-between;font-size:0.5rem;color:var(--sub);margin-bottom:5px;}
+.prog-bar{height:2px;background:var(--wire);}
+.prog-fill{height:100%;background:var(--cyan);transition:width 0.2s;width:0%;}
+.prog-msg{font-size:0.52rem;color:var(--cyan);margin-top:5px;min-height:16px;}
+
+/* RESULTS */
+#results{display:none;}
+
+/* SUMMARY ROW */
+.summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;}
+.scard{background:var(--bg2);border:1px solid var(--wire);padding:12px;text-align:center;}
+.sc-l{font-size:0.44rem;letter-spacing:2px;color:var(--sub);margin-bottom:4px;}
+.sc-v{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1;}
+
+/* EXPLORER TABLE */
+.table-wrap{background:var(--bg2);border:1px solid var(--wire);margin-bottom:16px;overflow-x:auto;}
+.table-hdr{padding:10px 14px;border-bottom:1px solid var(--wire);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.th-title{font-size:0.48rem;letter-spacing:3px;color:var(--blue);}
+.sort-btns{display:flex;gap:4px;}
+.sort-btn{font-size:0.44rem;letter-spacing:1px;padding:3px 8px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.sort-btn.act{border-color:var(--cyan);color:var(--cyan);}
+
+table{width:100%;border-collapse:collapse;min-width:900px;}
+th{font-size:0.44rem;letter-spacing:2px;color:var(--sub);padding:8px 10px;border-bottom:1px solid var(--wire);text-align:left;font-weight:400;cursor:pointer;white-space:nowrap;}
+th:hover{color:var(--text);}
+td{padding:7px 10px;border-bottom:1px solid rgba(13,30,48,0.8);font-size:0.58rem;white-space:nowrap;}
+tr:hover td{background:rgba(0,187,255,0.02);}
+tr.top-edge td{background:rgba(0,255,153,0.03);}
+
+/* EDGE BARS */
+.edge-bar{display:flex;align-items:center;gap:6px;}
+.eb-track{width:80px;height:6px;background:var(--wire);border-radius:3px;flex-shrink:0;}
+.eb-fill{height:100%;border-radius:3px;}
+.eb-val{font-size:0.58rem;min-width:40px;}
+
+/* DISTRIBUTION MINI */
+.dist-mini{display:flex;align-items:flex-end;gap:1px;height:20px;}
+.dm-bar{width:6px;background:var(--dim);border-radius:1px;}
+
+/* DETAIL PANEL */
+.detail{background:var(--bg2);border:1px solid var(--wire);margin-bottom:16px;display:none;}
+.detail-hdr{padding:12px 14px;border-bottom:1px solid var(--wire);display:flex;justify-content:space-between;align-items:center;}
+.detail-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:2px;}
+.detail-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--wire);}
+.detail-cell{background:var(--bg3);padding:14px;}
+.dc-label{font-size:0.44rem;letter-spacing:2px;color:var(--sub);margin-bottom:8px;}
+.dc-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+.dc-sub{font-size:0.5rem;color:var(--sub);margin-top:4px;}
+
+/* FORWARD RETURNS */
+.fwd-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--wire);margin-top:1px;}
+.fwd-cell{background:var(--bg3);padding:12px;text-align:center;}
+.fwd-h{font-size:0.44rem;letter-spacing:2px;color:var(--sub);margin-bottom:6px;}
+.fwd-ret{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;}
+.fwd-wr{font-size:0.52rem;margin-top:3px;}
+
+/* LOG */
+.log-wrap{background:var(--bg2);border:1px solid var(--wire);padding:12px;}
+.log-t{font-size:0.44rem;letter-spacing:3px;color:var(--sub);margin-bottom:8px;}
+.log-scroll{max-height:120px;overflow-y:auto;}
+.log-line{font-size:0.52rem;padding:2px 0;border-bottom:1px solid rgba(13,30,48,0.5);display:flex;gap:8px;}
+.log-ts{color:var(--faint);flex-shrink:0;min-width:60px;}
+
+@media(max-width:900px){
+  .controls{grid-template-columns:1fr;}
+  .summary-row{grid-template-columns:repeat(3,1fr);}
+  .detail-body{grid-template-columns:1fr;}
+  .fwd-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">SIGNAL <em>EXPLORER</em></div>
+  <div class="logo-sub">LOS DATOS ELIGEN — NO YO · CORRELACIÓN REAL INDICADOR→PRECIO FUTURO · SIN ESTRATEGIAS INVENTADAS</div>
+  <div class="nav">
+    <a href="trading-system-v1.html">DASHBOARD</a>
+    <a href="agent.html">AGENTE</a>
+    <a href="analytics.html">ANALYTICS</a>
+    <a href="backtest-v3.html">BACKTEST</a>
+    <a href="explorer.html" class="act">EXPLORER</a>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="panel">
+    <div class="ph">CONFIGURACIÓN</div>
+    <div class="pb">
+      <!-- ACTIVOS -->
+      <div class="lbl" style="margin-bottom:6px;">ACTIVO (uno a la vez para análisis limpio)</div>
+      <div class="chips" id="asset-chips">
+        <button class="chip on" data-a="BTCUSDT" onclick="selAsset(this)">BTC</button>
+        <button class="chip" data-a="ETHUSDT" onclick="selAsset(this)">ETH</button>
+        <button class="chip" data-a="SOLUSDT" onclick="selAsset(this)">SOL</button>
+        <button class="chip" data-a="XRPUSDT" onclick="selAsset(this)">XRP</button>
+        <button class="chip" data-a="LTCUSDT" onclick="selAsset(this)">LTC</button>
+        <button class="chip" data-a="LINKUSDT" onclick="selAsset(this)">LINK</button>
+        <button class="chip" data-a="BNBUSDT" onclick="selAsset(this)">BNB</button>
+      </div>
+
+      <!-- TIMEFRAMES -->
+      <div class="lbl" style="margin-bottom:6px;">TIMEFRAMES A ANALIZAR</div>
+      <div class="tf-chips">
+        <button class="tfc on" data-tf="15m" onclick="toggleTF(this)">15m</button>
+        <button class="tfc on" data-tf="30m" onclick="toggleTF(this)">30m</button>
+        <button class="tfc on" data-tf="1h" onclick="toggleTF(this)">1H</button>
+        <button class="tfc on" data-tf="4h" onclick="toggleTF(this)">4H</button>
+      </div>
+
+      <!-- PARAMS -->
+      <div class="row-3">
+        <div>
+          <div class="lbl">PERÍODO DE DATOS</div>
+          <select id="cfg-period">
+            <option value="365">1 año</option>
+            <option value="730" selected>2 años</option>
+            <option value="1095">3 años</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">RSI PERÍODOS A PROBAR</div>
+          <select id="cfg-rsi">
+            <option value="all" selected>Todos (2 al 20)</option>
+            <option value="fast">Rápidos (2-10)</option>
+            <option value="std">Estándar (7-21)</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">HORIZONTES FORWARD</div>
+          <select id="cfg-fwd">
+            <option value="3,6,12,24,48" selected>3, 6, 12, 24, 48 velas</option>
+            <option value="6,12,24,48,96">6, 12, 24, 48, 96 velas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div>
+          <div class="lbl">MIN OCURRENCIAS PARA VALIDEZ</div>
+          <select id="cfg-minN">
+            <option value="20" selected>20 señales mínimo</option>
+            <option value="30">30 señales mínimo</option>
+            <option value="10">10 señales mínimo</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">MOSTRAR TOP</div>
+          <select id="cfg-top">
+            <option value="50" selected>Top 50 señales</option>
+            <option value="100">Top 100</option>
+            <option value="all">Todas</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">QUÉ MIDE EL EXPLORADOR</div>
+    <div class="pb">
+      <div class="info-box">
+        PARA CADA COMBINACIÓN DE INDICADOR + PERÍODO + UMBRAL + TF:<br><br>
+        1. Encuentra todos los momentos históricos en que ocurrió la señal<br>
+        2. Mide el retorno del precio en las siguientes N velas<br>
+        3. Calcula % de veces que el precio subió (win rate real)<br>
+        4. Mide el drawdown promedio antes del rebote (para SL)<br>
+        5. Muestra la distribución de retornos (¿es consistente o hay outliers?)<br><br>
+        SEÑALES QUE ANALIZA:<br>
+        · RSI — todos los períodos del 2 al 20, umbrales 15 al 45<br>
+        · Bollinger Bands — precio toca banda inferior/superior<br>
+        · Volumen — spike de volumen relativo<br>
+        · MACD histograma — cruces en todas las configs<br>
+        · Combinaciones de 2 señales simultáneas<br><br>
+        LOS DATOS DECIDEN. YO NO ELIJO NADA.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RUN -->
+<button class="run-btn" id="run-btn" onclick="runExplorer()">EXPLORAR SEÑALES</button>
+
+<!-- PROGRESS -->
+<div class="prog" id="prog">
+  <div class="prog-hdr"><span id="prog-label">INICIANDO</span><span id="prog-pct">0%</span></div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="prog-msg" id="prog-msg"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+
+  <!-- SUMMARY -->
+  <div class="summary-row" id="summary-row"></div>
+
+  <!-- DETAIL (cuando clickeás una fila) -->
+  <div class="detail" id="detail">
+    <div class="detail-hdr">
+      <div class="detail-title" id="detail-title">—</div>
+      <button style="font-size:0.5rem;letter-spacing:2px;padding:5px 12px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;" onclick="document.getElementById('detail').style.display='none'">CERRAR</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="fwd-grid" id="detail-fwd"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-hdr">
+      <span class="th-title">TODAS LAS SEÑALES — ORDENADAS POR EDGE</span>
+      <div class="sort-btns">
+        <button class="sort-btn act" onclick="sortBy('edge')">EDGE</button>
+        <button class="sort-btn" onclick="sortBy('wr')">WIN RATE</button>
+        <button class="sort-btn" onclick="sortBy('ret')">RETORNO</button>
+        <button class="sort-btn" onclick="sortBy('n')">OCURRENCIAS</button>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('rank')">#</th>
+          <th onclick="sortBy('signal')">SEÑAL</th>
+          <th onclick="sortBy('tf')">TF</th>
+          <th onclick="sortBy('n')">OCURR.</th>
+          <th onclick="sortBy('wr')">WIN RATE</th>
+          <th onclick="sortBy('ret')">RET PROMEDIO</th>
+          <th>RETORNO POR HORIZONTE →</th>
+          <th onclick="sortBy('dd')">DD PROMEDIO</th>
+          <th onclick="sortBy('edge')">EDGE SCORE</th>
+          <th>DISTRIBUCIÓN</th>
+        </tr>
+      </thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- TOP COMBOS -->
+  <div class="table-wrap" id="combos-wrap" style="display:none;">
+    <div class="table-hdr">
+      <span class="th-title">COMBINACIONES DE 2 SEÑALES SIMULTÁNEAS (top por edge)</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>SEÑAL A</th>
+          <th>SEÑAL B</th>
+          <th>TF</th>
+          <th>OCURR.</th>
+          <th>WIN RATE</th>
+          <th>RET PROMEDIO</th>
+          <th>DD PROMEDIO</th>
+          <th>EDGE SCORE</th>
+        </tr>
+      </thead>
+      <tbody id="combos-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- LOG -->
+<div class="log-wrap">
+  <div class="log-t">LOG DEL SISTEMA</div>
+  <div class="log-scroll" id="log-scroll"></div>
+</div>
+
+</div><!-- /page -->
+<script>
+// ═══════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════
+const WORKER = 'https://apex-agent.josepsanz2000.workers.dev';
+let selAssetVal = 'BTCUSDT';
+let selTFs = new Set(['15m','30m','1h','4h']);
+let allSignals = [];
+let sortKey = 'edge';
+let logs = [];
+
+function selAsset(el) {
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  selAssetVal = el.dataset.a;
+}
+function toggleTF(el) {
+  el.classList.toggle('on');
+  const tf = el.dataset.tf;
+  selTFs.has(tf) ? selTFs.delete(tf) : selTFs.add(tf);
+}
+
+// ═══════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════
+function log(text, color='var(--sub)') {
+  const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.unshift({t,text,color});
+  if(logs.length>80) logs.pop();
+  document.getElementById('log-scroll').innerHTML = logs.slice(0,20).map(l=>
+    `<div class="log-line"><span class="log-ts">${l.t}</span><span style="color:${l.color}">${l.text}</span></div>`
+  ).join('');
+}
+function setProgress(pct, label, msg) {
+  document.getElementById('prog-fill').style.width=Math.round(pct)+'%';
+  document.getElementById('prog-pct').textContent=Math.round(pct)+'%';
+  if(label) document.getElementById('prog-label').textContent=label;
+  if(msg)   document.getElementById('prog-msg').textContent=msg;
+}
+
+// ═══════════════════════════════════════════════════
+// FETCH VELAS
+// ═══════════════════════════════════════════════════
+async function fetchCandles(symbol, interval, days) {
+  const endMs   = Date.now();
+  const startMs = endMs - days * 86400000;
+  const all = [];
+  let cur = startMs;
+
+  while(cur < endMs) {
+    const url = `${WORKER}/klines?symbol=${symbol}&interval=${interval}&startTime=${cur}&endTime=${endMs}&limit=1000`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(!Array.isArray(data)||data.length===0) break;
+    for(const k of data) all.push({
+      t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4], v:+k[5]
+    });
+    cur = data[data.length-1][0] + 1;
+    if(data.length < 1000) break;
+    await new Promise(r=>setTimeout(r,80));
+  }
+  return all;
+}
+
+// ═══════════════════════════════════════════════════
+// INDICADORES — calcular sobre array de closes
+// ═══════════════════════════════════════════════════
+function calcRSI(closes, period) {
+  const r = new Array(closes.length).fill(null);
+  if(closes.length < period + 1) return r;
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const d=closes[i]-closes[i-1];
+    if(d>0) gains+=d; else losses-=d;
+  }
+  let ag=gains/period, al=losses/period;
+  r[period] = al===0 ? 100 : 100 - 100/(1+ag/al);
+  for(let i=period+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(period-1)+(d>0?d:0))/period;
+    al=(al*(period-1)+(d<0?-d:0))/period;
+    r[i] = al===0 ? 100 : 100 - 100/(1+ag/al);
+  }
+  return r;
+}
+
+function calcBB(closes, period=20, mult=2) {
+  return closes.map((_,i)=>{
+    if(i<period-1) return null;
+    const sl=closes.slice(i-period+1,i+1);
+    const mean=sl.reduce((a,b)=>a+b,0)/period;
+    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/period);
+    return{upper:mean+mult*std, lower:mean-mult*std, mid:mean, bw:(2*mult*std)/mean};
+  });
+}
+
+function calcVolRelative(volumes, period=20) {
+  return volumes.map((_,i)=>{
+    if(i<period) return 1;
+    const avg=volumes.slice(i-period,i).reduce((a,b)=>a+b,0)/period;
+    return avg>0 ? volumes[i]/avg : 1;
+  });
+}
+
+function calcMACD(closes, fast=12, slow=26, sig=9) {
+  const ema=(arr,p)=>{const k=2/(p+1);let e=[arr[0]];for(let i=1;i<arr.length;i++)e.push(arr[i]*k+e[i-1]*(1-k));return e;};
+  const ef=ema(closes,fast), es=ema(closes,slow);
+  const ml=ef.map((v,i)=>v-es[i]);
+  const sl=ema(ml,sig);
+  return ml.map((v,i)=>v-sl[i]); // histograma
+}
+
+// ═══════════════════════════════════════════════════
+// INDICADORES ADICIONALES
+// ═══════════════════════════════════════════════════
+function calcATR(candles, period=14) {
+  const tr = candles.map((c,i)=>i===0?c.h-c.l:Math.max(c.h-c.l,Math.abs(c.h-candles[i-1].c),Math.abs(c.l-candles[i-1].c)));
+  const a=[tr[0]];
+  for(let i=1;i<tr.length;i++) a.push((a[i-1]*(period-1)+tr[i])/period);
+  return a;
+}
+
+function calcVWAP(candles) {
+  let cv=0,vol=0;
+  return candles.map(c=>{const tp=(c.h+c.l+c.c)/3;cv+=tp*c.v;vol+=c.v;return vol>0?cv/vol:tp;});
+}
+
+function calcStoch(candles, kPeriod=14, dPeriod=3) {
+  const k = candles.map((_,i)=>{
+    if(i<kPeriod-1) return null;
+    const sl=candles.slice(i-kPeriod+1,i+1);
+    const hi=Math.max(...sl.map(c=>c.h)), lo=Math.min(...sl.map(c=>c.l));
+    return hi===lo ? 50 : (candles[i].c-lo)/(hi-lo)*100;
+  });
+  // %D = SMA de %K
+  const d = k.map((_,i)=>{
+    if(i<kPeriod+dPeriod-2) return null;
+    const sl=k.slice(i-dPeriod+1,i+1).filter(v=>v!==null);
+    return sl.length ? sl.reduce((a,b)=>a+b,0)/sl.length : null;
+  });
+  return {k, d};
+}
+
+function calcCCI(candles, period=20) {
+  return candles.map((_,i)=>{
+    if(i<period-1) return null;
+    const sl=candles.slice(i-period+1,i+1);
+    const tp=sl.map(c=>(c.h+c.l+c.c)/3);
+    const mean=tp.reduce((a,b)=>a+b,0)/period;
+    const md=tp.reduce((a,b)=>a+Math.abs(b-mean),0)/period;
+    return md===0 ? 0 : (tp[tp.length-1]-mean)/(0.015*md);
+  });
+}
+
+function calcWilliamsR(candles, period=14) {
+  return candles.map((_,i)=>{
+    if(i<period-1) return null;
+    const sl=candles.slice(i-period+1,i+1);
+    const hi=Math.max(...sl.map(c=>c.h)), lo=Math.min(...sl.map(c=>c.l));
+    return hi===lo ? -50 : (hi-candles[i].c)/(hi-lo)*-100;
+  });
+}
+
+function calcROC(closes, period=10) {
+  return closes.map((c,i)=>{
+    if(i<period) return null;
+    return closes[i-period]!==0 ? (c-closes[i-period])/closes[i-period]*100 : null;
+  });
+}
+
+function calcMFI(candles, period=14) {
+  const tp = candles.map(c=>(c.h+c.l+c.c)/3);
+  const mf = tp.map((t,i)=>t*candles[i].v);
+  return tp.map((_,i)=>{
+    if(i<period) return null;
+    let pmf=0, nmf=0;
+    for(let j=i-period+1;j<=i;j++){
+      if(tp[j]>tp[j-1]||j===i-period+1) pmf+=mf[j];
+      else nmf+=mf[j];
+    }
+    return nmf===0 ? 100 : 100 - 100/(1+pmf/nmf);
+  });
+}
+
+// Divergencia RSI-precio: precio hace nuevo mínimo pero RSI no
+function findRSIDivergence(candles, rsiArr, lookback=20) {
+  const bullDiv=[], bearDiv=[];
+  for(let i=lookback+1; i<candles.length; i++) {
+    if(rsiArr[i]===null) continue;
+    // Buscar mínimo anterior en el lookback
+    let prevMinIdx=-1, prevMinPrice=Infinity, prevMinRSI=Infinity;
+    for(let j=i-lookback; j<i-3; j++) {
+      if(rsiArr[j]!==null && candles[j].l<prevMinPrice) {
+        prevMinPrice=candles[j].l; prevMinRSI=rsiArr[j]; prevMinIdx=j;
+      }
+    }
+    // Divergencia alcista: precio nuevo mínimo pero RSI no
+    if(prevMinIdx>=0 && candles[i].l < prevMinPrice && rsiArr[i] > prevMinRSI && rsiArr[i]<40) {
+      bullDiv.push(i);
+    }
+    // Buscar máximo anterior
+    let prevMaxIdx=-1, prevMaxPrice=-Infinity, prevMaxRSI=-Infinity;
+    for(let j=i-lookback; j<i-3; j++) {
+      if(rsiArr[j]!==null && candles[j].h>prevMaxPrice) {
+        prevMaxPrice=candles[j].h; prevMaxRSI=rsiArr[j]; prevMaxIdx=j;
+      }
+    }
+    // Divergencia bajista: precio nuevo máximo pero RSI no
+    if(prevMaxIdx>=0 && candles[i].h > prevMaxPrice && rsiArr[i] < prevMaxRSI && rsiArr[i]>60) {
+      bearDiv.push(i);
+    }
+  }
+  return {bullDiv, bearDiv};
+}
+
+// ═══════════════════════════════════════════════════
+// MEDIR EDGE — función central
+// Dado un array de índices donde ocurrió la señal,
+// mide qué pasó con el precio en los horizontes forward
+// ═══════════════════════════════════════════════════
+function measureEdge(candles, signalIdxs, fwdHorizons) {
+  const results = {};
+  for(const h of fwdHorizons) {
+    const rets = [];
+    const dds  = [];
+    for(const i of signalIdxs) {
+      if(i + h >= candles.length) continue;
+      // Entrada en open de vela siguiente (sin lookahead)
+      const entryPrice = candles[i+1]?.o || candles[i].c;
+      const exitPrice  = candles[i+h].c;
+      const ret = (exitPrice - entryPrice) / entryPrice * 100;
+
+      // Drawdown máximo entre entrada y horizonte
+      let minPrice = entryPrice;
+      for(let j=i+1; j<=i+h && j<candles.length; j++) {
+        minPrice = Math.min(minPrice, candles[j].l);
+      }
+      const dd = (entryPrice - minPrice) / entryPrice * 100;
+
+      rets.push(ret);
+      dds.push(dd);
+    }
+    if(rets.length === 0) { results[h] = null; continue; }
+
+    const positive = rets.filter(r=>r>0).length;
+    const avgRet   = rets.reduce((a,b)=>a+b,0) / rets.length;
+    const avgDD    = dds.reduce((a,b)=>a+b,0) / dds.length;
+    const wr       = positive / rets.length * 100;
+    const sorted   = [...rets].sort((a,b)=>a-b);
+    const p25      = sorted[Math.floor(sorted.length*0.25)];
+    const p75      = sorted[Math.floor(sorted.length*0.75)];
+    const stddev   = Math.sqrt(rets.reduce((a,b)=>a+(b-avgRet)**2,0)/rets.length);
+
+    results[h] = { n:rets.length, avgRet, wr, avgDD, p25, p75, stddev, rets };
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════
+// GENERAR TODAS LAS SEÑALES
+// ═══════════════════════════════════════════════════
+function generateSignals(candles, fwdHorizons, rsiRange, minN) {
+  const closes  = candles.map(c=>c.c);
+  const volumes = candles.map(c=>c.v);
+  const signals = [];
+  const mainFwd = fwdHorizons[2] || fwdHorizons[0]; // horizonte principal para ranking
+
+  // ── RSI — todos los períodos y umbrales ──────────
+  for(const period of rsiRange) {
+    const rsiArr = calcRSI(closes, period);
+
+    // Umbrales: 15 a 45 de a 5 (sobreventa LONG)
+    for(let thresh = 15; thresh <= 45; thresh += 5) {
+      const idxs = [];
+      for(let i=period+1; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(rsiArr[i] !== null && rsiArr[i] < thresh) idxs.push(i);
+      }
+      if(idxs.length < minN) continue;
+
+      const edge = measureEdge(candles, idxs, fwdHorizons);
+      const main = edge[mainFwd];
+      if(!main) continue;
+
+      // Edge score: wr × avgRet (positivo si tiene edge real)
+      const score = main.wr/100 * main.avgRet;
+
+      signals.push({
+        id: `RSI(${period})<${thresh}`,
+        type: 'RSI_OS',
+        label: `RSI(${period}) < ${thresh}`,
+        direction: 'LONG',
+        n: idxs.length,
+        edge, mainFwd, score,
+        wr: main.wr, avgRet: main.avgRet, avgDD: main.avgDD,
+        params: { period, thresh },
+        idxs,
+      });
+    }
+
+    // Umbrales: 55 a 85 de a 5 (sobrecompra SHORT)
+    for(let thresh = 55; thresh <= 85; thresh += 5) {
+      const idxs = [];
+      for(let i=period+1; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(rsiArr[i] !== null && rsiArr[i] > thresh) idxs.push(i);
+      }
+      if(idxs.length < minN) continue;
+
+      const edge = measureEdge(candles, idxs, fwdHorizons);
+      const main = edge[mainFwd];
+      if(!main) continue;
+
+      // Para SHORT: edge positivo si el precio BAJA
+      const score = main.wr/100 * (-main.avgRet);
+
+      signals.push({
+        id: `RSI(${period})>${thresh}`,
+        type: 'RSI_OB',
+        label: `RSI(${period}) > ${thresh}`,
+        direction: 'SHORT',
+        n: idxs.length,
+        edge, mainFwd, score,
+        wr: 100 - main.wr, // para short, wr es cuando baja
+        avgRet: -main.avgRet,
+        avgDD: main.avgDD,
+        params: { period, thresh },
+        idxs,
+      });
+    }
+  }
+
+  // ── BOLLINGER BANDS — precio toca banda ──────────
+  const bbArr = calcBB(closes, 20, 2);
+
+  // BB inferior → LONG
+  {
+    const idxs = [];
+    for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+      if(bbArr[i] && candles[i].c <= bbArr[i].lower * 1.005) idxs.push(i);
+    }
+    if(idxs.length >= minN) {
+      const edge = measureEdge(candles, idxs, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) {
+        signals.push({
+          id:'BB_LOWER', type:'BB', label:'BB inferior tocada (LONG)',
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score: main.wr/100 * main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // BB superior → SHORT
+  {
+    const idxs = [];
+    for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+      if(bbArr[i] && candles[i].c >= bbArr[i].upper * 0.995) idxs.push(i);
+    }
+    if(idxs.length >= minN) {
+      const edge = measureEdge(candles, idxs, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) {
+        signals.push({
+          id:'BB_UPPER', type:'BB', label:'BB superior tocada (SHORT)',
+          direction:'SHORT', n:idxs.length, edge, mainFwd,
+          score: main.wr/100 * (-main.avgRet),
+          wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // BB squeeze → expansión inminente
+  {
+    const bwArr = bbArr.map(b=>b?.bw||0);
+    const idxs = [];
+    for(let i=40; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+      if(!bbArr[i]) continue;
+      const minBW = Math.min(...bwArr.slice(i-20,i).filter(b=>b>0));
+      if(bbArr[i].bw <= minBW * 1.1) idxs.push(i); // en mínimo de volatilidad
+    }
+    if(idxs.length >= minN) {
+      const edge = measureEdge(candles, idxs, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) {
+        signals.push({
+          id:'BB_SQUEEZE', type:'BB', label:'BB Squeeze (expansión inminente)',
+          direction:'AMBOS', n:idxs.length, edge, mainFwd,
+          score: Math.abs(main.wr/100 * main.avgRet),
+          wr:Math.max(main.wr,100-main.wr), avgRet:Math.abs(main.avgRet), avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── VOLUMEN RELATIVO — spikes ────────────────────
+  const volRel = calcVolRelative(volumes);
+  for(const mult of [1.5, 2.0, 3.0]) {
+    const idxs = [];
+    for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+      if(volRel[i] >= mult) idxs.push(i);
+    }
+    if(idxs.length < minN) continue;
+    const edge = measureEdge(candles, idxs, fwdHorizons);
+    const main = edge[mainFwd];
+    if(!main) continue;
+    signals.push({
+      id:`VOL>${mult}x`, type:'VOL', label:`Volumen > ${mult}× promedio`,
+      direction:'AMBOS', n:idxs.length, edge, mainFwd,
+      score:Math.abs(main.wr/100*main.avgRet),
+      wr:Math.max(main.wr,100-main.wr), avgRet:Math.abs(main.avgRet), avgDD:main.avgDD, idxs,
+    });
+  }
+
+  // ── MACD HISTOGRAMA — cruces ─────────────────────
+  for(const [f,s,sig] of [[6,13,5],[12,26,9],[3,10,16]]) {
+    const hist = calcMACD(closes, f, s, sig);
+    // Cruce alcista (negativo → positivo)
+    {
+      const idxs=[];
+      for(let i=s+1; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(hist[i-1]<0 && hist[i]>0) idxs.push(i);
+      }
+      if(idxs.length>=minN){
+        const edge=measureEdge(candles,idxs,fwdHorizons);
+        const main=edge[mainFwd];
+        if(main) signals.push({
+          id:`MACD(${f}/${s})↑`, type:'MACD', label:`MACD(${f}/${s}/${sig}) cruce alcista`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+    // Cruce bajista
+    {
+      const idxs=[];
+      for(let i=s+1; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(hist[i-1]>0 && hist[i]<0) idxs.push(i);
+      }
+      if(idxs.length>=minN){
+        const edge=measureEdge(candles,idxs,fwdHorizons);
+        const main=edge[mainFwd];
+        if(main) signals.push({
+          id:`MACD(${f}/${s})↓`, type:'MACD', label:`MACD(${f}/${s}/${sig}) cruce bajista`,
+          direction:'SHORT', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*(-main.avgRet),
+          wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+
+  // ── ATR RELATIVO — mide si la volatilidad es extrema ──
+  {
+    const atrArr = calcATR(candles, 14);
+    // ATR muy bajo (squeeze de volatilidad) → expansión inminente
+    for(const lookback of [20, 50]) {
+      const idxs = [];
+      for(let i=lookback; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        const slice = atrArr.slice(i-lookback, i);
+        const minATR = Math.min(...slice);
+        if(atrArr[i] <= minATR * 1.1) idxs.push(i);
+      }
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`ATR_LOW(${lookback})`, type:'ATR', label:`ATR en mínimo ${lookback} velas (volatilidad comprimida)`,
+          direction:'AMBOS', n:idxs.length, edge, mainFwd,
+          score:Math.abs(main.wr/100*main.avgRet),
+          wr:Math.max(main.wr,100-main.wr), avgRet:Math.abs(main.avgRet), avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+    // ATR muy alto (pánico extremo) → posible reversión
+    for(const mult of [2.0, 3.0]) {
+      const idxs = [];
+      for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        const avg = atrArr.slice(i-20,i).reduce((a,b)=>a+b,0)/20;
+        if(atrArr[i] >= avg * mult) idxs.push(i);
+      }
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`ATR_HIGH(${mult}x)`, type:'ATR', label:`ATR spike ${mult}× promedio (volatilidad extrema)`,
+          direction:'AMBOS', n:idxs.length, edge, mainFwd,
+          score:Math.abs(main.wr/100*main.avgRet),
+          wr:Math.max(main.wr,100-main.wr), avgRet:Math.abs(main.avgRet), avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── VWAP — precio relativo al VWAP ───────────────
+  {
+    const vwapArr = calcVWAP(candles);
+    // Precio muy por debajo del VWAP → posible retorno
+    for(const pct of [0.01, 0.02, 0.03]) {
+      const idxs = [];
+      for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(candles[i].c < vwapArr[i] * (1-pct)) idxs.push(i);
+      }
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`VWAP-${(pct*100).toFixed(0)}%`, type:'VWAP',
+          label:`Precio ${(pct*100).toFixed(0)}% bajo VWAP (LONG)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+    // Precio muy por encima del VWAP → posible caída
+    for(const pct of [0.01, 0.02, 0.03]) {
+      const idxs = [];
+      for(let i=20; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+        if(candles[i].c > vwapArr[i] * (1+pct)) idxs.push(i);
+      }
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`VWAP+${(pct*100).toFixed(0)}%`, type:'VWAP',
+          label:`Precio ${(pct*100).toFixed(0)}% sobre VWAP (SHORT)`,
+          direction:'SHORT', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*(-main.avgRet),
+          wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── STOCHASTIC ───────────────────────────────────
+  for(const kP of [9, 14, 21]) {
+    const stoch = calcStoch(candles, kP);
+    // Stoch K oversold
+    for(const thresh of [20, 25, 30]) {
+      const idxs = stoch.k.reduce((a,v,i)=>v!==null&&v<thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`STOCH(${kP})<${thresh}`, type:'STOCH',
+          label:`Stochastic(${kP}) K < ${thresh} (sobreventa)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+    // Stoch K overbought
+    for(const thresh of [70, 75, 80]) {
+      const idxs = stoch.k.reduce((a,v,i)=>v!==null&&v>thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`STOCH(${kP})>${thresh}`, type:'STOCH',
+          label:`Stochastic(${kP}) K > ${thresh} (sobrecompra)`,
+          direction:'SHORT', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*(-main.avgRet),
+          wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── CCI ──────────────────────────────────────────
+  for(const period of [14, 20]) {
+    const cciArr = calcCCI(candles, period);
+    for(const thresh of [-100, -150, -200]) {
+      const idxs = cciArr.reduce((a,v,i)=>v!==null&&v<thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`CCI(${period})<${thresh}`, type:'CCI',
+          label:`CCI(${period}) < ${thresh} (sobreventa extrema)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+    for(const thresh of [100, 150, 200]) {
+      const idxs = cciArr.reduce((a,v,i)=>v!==null&&v>thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`CCI(${period})>${thresh}`, type:'CCI',
+          label:`CCI(${period}) > ${thresh} (sobrecompra extrema)`,
+          direction:'SHORT', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*(-main.avgRet),
+          wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── WILLIAMS %R ──────────────────────────────────
+  for(const period of [10, 14]) {
+    const wrArr = calcWilliamsR(candles, period);
+    for(const thresh of [-80, -85, -90]) {
+      const idxs = wrArr.reduce((a,v,i)=>v!==null&&v<thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`WR(${period})<${thresh}`, type:'WR',
+          label:`Williams %R(${period}) < ${thresh} (sobreventa)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── ROC — Rate of Change ──────────────────────────
+  for(const period of [5, 10, 20]) {
+    const rocArr = calcROC(closes, period);
+    for(const thresh of [-5, -10, -15]) {
+      const idxs = rocArr.reduce((a,v,i)=>v!==null&&v<thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`ROC(${period})<${thresh}%`, type:'ROC',
+          label:`ROC(${period}) < ${thresh}% (caída fuerte)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── MFI — Money Flow Index ────────────────────────
+  {
+    const mfiArr = calcMFI(candles, 14);
+    for(const thresh of [20, 25, 30]) {
+      const idxs = mfiArr.reduce((a,v,i)=>v!==null&&v<thresh&&i<candles.length-Math.max(...fwdHorizons)-1?[...a,i]:a,[]);
+      if(idxs.length >= minN) {
+        const edge = measureEdge(candles, idxs, fwdHorizons);
+        const main = edge[mainFwd];
+        if(main) signals.push({
+          id:`MFI<${thresh}`, type:'MFI',
+          label:`MFI(14) < ${thresh} (flujo dinero negativo)`,
+          direction:'LONG', n:idxs.length, edge, mainFwd,
+          score:main.wr/100*main.avgRet,
+          wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs,
+        });
+      }
+    }
+  }
+
+  // ── DIVERGENCIAS RSI-PRECIO ───────────────────────
+  for(const rsiP of [6, 9, 14]) {
+    const rsiArr = calcRSI(closes, rsiP);
+    const {bullDiv, bearDiv} = findRSIDivergence(candles, rsiArr);
+    if(bullDiv.length >= minN) {
+      const edge = measureEdge(candles, bullDiv, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) signals.push({
+        id:`DIV_BULL_RSI(${rsiP})`, type:'DIV',
+        label:`Divergencia alcista RSI(${rsiP}) (precio↓ RSI↑)`,
+        direction:'LONG', n:bullDiv.length, edge, mainFwd,
+        score:main.wr/100*main.avgRet,
+        wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs:bullDiv,
+      });
+    }
+    if(bearDiv.length >= minN) {
+      const edge = measureEdge(candles, bearDiv, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) signals.push({
+        id:`DIV_BEAR_RSI(${rsiP})`, type:'DIV',
+        label:`Divergencia bajista RSI(${rsiP}) (precio↑ RSI↓)`,
+        direction:'SHORT', n:bearDiv.length, edge, mainFwd,
+        score:main.wr/100*(-main.avgRet),
+        wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs:bearDiv,
+      });
+    }
+  }
+
+  // ── BB MÚLTIPLES PERÍODOS ─────────────────────────
+  for(const bbP of [10, 14, 30, 50]) {
+    const bbPArr = calcBB(closes, bbP, 2);
+    const idxsL = [], idxsS = [];
+    for(let i=bbP; i<candles.length-Math.max(...fwdHorizons)-1; i++) {
+      if(!bbPArr[i]) continue;
+      if(candles[i].c <= bbPArr[i].lower * 1.005) idxsL.push(i);
+      if(candles[i].c >= bbPArr[i].upper * 0.995) idxsS.push(i);
+    }
+    if(idxsL.length >= minN) {
+      const edge = measureEdge(candles, idxsL, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) signals.push({
+        id:`BB(${bbP})_LOW`, type:'BB',
+        label:`BB(${bbP},2) banda inferior tocada`,
+        direction:'LONG', n:idxsL.length, edge, mainFwd,
+        score:main.wr/100*main.avgRet,
+        wr:main.wr, avgRet:main.avgRet, avgDD:main.avgDD, idxs:idxsL,
+      });
+    }
+    if(idxsS.length >= minN) {
+      const edge = measureEdge(candles, idxsS, fwdHorizons);
+      const main = edge[mainFwd];
+      if(main) signals.push({
+        id:`BB(${bbP})_HIGH`, type:'BB',
+        label:`BB(${bbP},2) banda superior tocada`,
+        direction:'SHORT', n:idxsS.length, edge, mainFwd,
+        score:main.wr/100*(-main.avgRet),
+        wr:100-main.wr, avgRet:-main.avgRet, avgDD:main.avgDD, idxs:idxsS,
+      });
+    }
+  }
+
+  return signals.sort((a,b) => b.score - a.score);
+}
+
+// ═══════════════════════════════════════════════════
+// COMBINACIONES DE 2 SEÑALES
+// ═══════════════════════════════════════════════════
+function generateCombos(candles, topSignals, fwdHorizons, minN) {
+  const mainFwd = fwdHorizons[2] || fwdHorizons[0];
+  const combos = [];
+  const top = topSignals.slice(0, 20); // solo top 20 para no explotar
+
+  for(let a=0; a<top.length; a++) {
+    for(let b=a+1; b<top.length; b++) {
+      const sA = top[a], sB = top[b];
+      // Solo combinar señales de la misma dirección
+      if(sA.direction !== sB.direction && sA.direction !== 'AMBOS' && sB.direction !== 'AMBOS') continue;
+
+      const setA = new Set(sA.idxs);
+      const combined = sB.idxs.filter(i => setA.has(i));
+      if(combined.length < minN) continue;
+
+      const edge = measureEdge(candles, combined, fwdHorizons);
+      const main = edge[mainFwd];
+      if(!main) continue;
+
+      const dir = sA.direction === 'AMBOS' ? sB.direction : sA.direction;
+      const score = dir==='SHORT' ? main.wr/100*(-main.avgRet) : main.wr/100*main.avgRet;
+
+      combos.push({
+        labelA: sA.label, labelB: sB.label,
+        direction: dir,
+        n: combined.length,
+        wr: dir==='SHORT' ? 100-main.wr : main.wr,
+        avgRet: dir==='SHORT' ? -main.avgRet : main.avgRet,
+        avgDD: main.avgDD, score,
+      });
+    }
+  }
+
+  return combos.sort((a,b) => b.score - a.score).slice(0, 30);
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════
+async function runExplorer() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '⏳ DESCARGANDO...';
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  allSignals = []; logs = [];
+
+  const days      = parseInt(document.getElementById('cfg-period').value);
+  const rsiCfg    = document.getElementById('cfg-rsi').value;
+  const fwdStr    = document.getElementById('cfg-fwd').value;
+  const minN      = parseInt(document.getElementById('cfg-minN').value);
+  const topN      = document.getElementById('cfg-top').value;
+  const fwdH      = fwdStr.split(',').map(Number);
+  const tfs       = [...selTFs];
+
+  const rsiRange = rsiCfg==='fast'  ? Array.from({length:9},(_,i)=>i+2)
+                 : rsiCfg==='std'   ? Array.from({length:15},(_,i)=>i+7)
+                 : Array.from({length:19},(_,i)=>i+2); // 2 al 20
+
+  log(`🚀 Explorer iniciado · ${selAssetVal} · ${tfs.join(',')} · ${days} días`, 'var(--cyan)');
+  log(`🔍 RSI períodos: ${rsiRange[0]}-${rsiRange[rsiRange.length-1]} · Horizontes: ${fwdH.join(',')} velas`, 'var(--blue)');
+
+  const allTFSignals = [];
+
+  for(let ti=0; ti<tfs.length; ti++) {
+    const tf = tfs[ti];
+    setProgress(ti/tfs.length*60, `DESCARGANDO ${tf}`, `${selAssetVal} en ${tf}`);
+
+    log(`📊 Descargando ${selAssetVal} ${tf}...`, 'var(--gold)');
+    let candles;
+    try {
+      candles = await fetchCandles(selAssetVal, tf, days);
+      log(`✅ ${tf}: ${candles.length} velas descargadas`, 'var(--green)');
+    } catch(e) {
+      log(`❌ ${tf}: error — ${e.message}`, 'var(--red)');
+      continue;
+    }
+
+    if(candles.length < 200) { log(`⚠️ ${tf}: insuficiente`, 'var(--gold)'); continue; }
+
+    setProgress(ti/tfs.length*60+10, `ANALIZANDO ${tf}`, `Calculando señales...`);
+    await new Promise(r=>setTimeout(r,0));
+
+    const sigs = generateSignals(candles, fwdH, rsiRange, minN);
+    log(`📈 ${tf}: ${sigs.length} señales con edge medible`, sigs.length>0?'var(--green)':'var(--gold)');
+
+    for(const s of sigs) { s.tf = tf; allTFSignals.push(s); }
+
+    setProgress(ti/tfs.length*60+20, `COMBINACIONES ${tf}`, `Probando pares de señales...`);
+    await new Promise(r=>setTimeout(r,0));
+  }
+
+  // Ordenar todas las señales de todos los TF por score
+  allSignals = allTFSignals.sort((a,b) => b.score - a.score);
+  const limitN = topN==='all' ? allSignals.length : parseInt(topN);
+
+  setProgress(90, 'RENDERIZANDO', `${allSignals.length} señales analizadas`);
+  await new Promise(r=>setTimeout(r,0));
+
+  // Combos del mejor TF
+  let combos = [];
+  if(allSignals.length > 0) {
+    const bestTF = allSignals[0].tf;
+    const bestTFCandles = await fetchCandles(selAssetVal, bestTF, days).catch(()=>[]);
+    if(bestTFCandles.length > 200) {
+      const topSigs = allSignals.filter(s=>s.tf===bestTF).slice(0,20);
+      combos = generateCombos(bestTFCandles, topSigs, fwdH, minN);
+      log(`🔗 Combinaciones: ${combos.length} pares con datos suficientes`, 'var(--purple)');
+    }
+  }
+
+  renderResults(allSignals.slice(0, limitN), combos, fwdH);
+
+  setProgress(100, 'COMPLETADO', `${allSignals.length} señales · top edge: ${allSignals[0]?.id||'—'} en ${allSignals[0]?.tf||'—'}`);
+  log(`🏁 Explorer completado · Top señal: ${allSignals[0]?.label||'—'} (${allSignals[0]?.tf||'—'}) score:${allSignals[0]?.score?.toFixed(3)||'—'}`, 'var(--green)');
+
+  btn.disabled = false; btn.textContent = 'EXPLORAR SEÑALES';
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function renderResults(signals, combos, fwdH) {
+  document.getElementById('results').style.display = 'block';
+
+  // Summary
+  const positiveEdge = signals.filter(s=>s.score>0);
+  const topScore = signals[0]?.score||0;
+  const avgWR = signals.length ? signals.reduce((a,s)=>a+s.wr,0)/signals.length : 0;
+  const bestTF = signals[0]?.tf||'—';
+
+  document.getElementById('summary-row').innerHTML = `
+    <div class="scard"><div class="sc-l">SEÑALES ANALIZADAS</div><div class="sc-v" style="color:var(--blue)">${signals.length}</div></div>
+    <div class="scard"><div class="sc-l">CON EDGE POSITIVO</div><div class="sc-v" style="color:var(--green)">${positiveEdge.length}</div></div>
+    <div class="scard"><div class="sc-l">MEJOR SCORE</div><div class="sc-v" style="color:var(--cyan)">${topScore.toFixed(3)}</div></div>
+    <div class="scard"><div class="sc-l">MEJOR TF</div><div class="sc-v" style="color:var(--gold)">${bestTF.toUpperCase()}</div></div>
+    <div class="scard"><div class="sc-l">TOP SEÑAL</div><div class="sc-v" style="color:var(--cyan);font-size:1rem;">${signals[0]?.id||'—'}</div></div>
+  `;
+
+  // Table
+  const retC = v => v>1?'var(--green)':v>0?'var(--teal)':v>-1?'var(--gold)':'var(--red)';
+  const wrC  = v => v>60?'var(--green)':v>50?'var(--teal)':v>40?'var(--gold)':'var(--red)';
+  const dirC = d => d==='LONG'?'var(--green)':d==='SHORT'?'var(--red)':'var(--gold)';
+
+  document.getElementById('results-tbody').innerHTML = signals.map((s,idx) => {
+    const isTop = idx < 5 && s.score > 0;
+    const fwdCells = fwdH.map(h => {
+      const e = s.edge[h];
+      if(!e) return '<td style="color:var(--faint)">—</td>';
+      const col = retC(e.avgRet);
+      return `<td style="color:${col}">${e.avgRet>=0?'+':''}${e.avgRet.toFixed(2)}% <span style="color:var(--sub);font-size:0.48rem;">${e.wr.toFixed(0)}%↑</span></td>`;
+    }).join('');
+
+    // Mini distribución
+    const main = s.edge[s.mainFwd];
+    let distHTML = '<div class="dist-mini">';
+    if(main?.rets) {
+      const bins = [-5,-3,-1,0,1,3,5];
+      const counts = bins.map((b,i) => main.rets.filter(r=>r>b&&r<=(bins[i+1]||99)).length);
+      const maxC = Math.max(...counts,1);
+      distHTML += counts.map((c,i) => {
+        const h = Math.round(c/maxC*18)+2;
+        const col = bins[i]>=0?'var(--green)':'var(--red)';
+        return `<div class="dm-bar" style="height:${h}px;background:${col};opacity:0.7;"></div>`;
+      }).join('');
+    }
+    distHTML += '</div>';
+
+    return `<tr class="${isTop?'top-edge':''}" onclick="showDetail(${idx})" style="cursor:pointer;">
+      <td style="color:var(--sub)">${idx+1}</td>
+      <td><strong style="color:${isTop?'var(--cyan)':'var(--text)'}">${s.label}</strong></td>
+      <td><span style="color:var(--gold);font-size:0.52rem;">${s.tf?.toUpperCase()||'—'}</span></td>
+      <td style="color:var(--blue)">${s.n}</td>
+      <td style="color:${wrC(s.wr)}">${s.wr.toFixed(1)}%</td>
+      <td style="color:${retC(s.avgRet)}">${s.avgRet>=0?'+':''}${s.avgRet.toFixed(3)}%</td>
+      ${fwdCells}
+      <td style="color:var(--red)">-${s.avgDD.toFixed(2)}%</td>
+      <td>
+        <div class="edge-bar">
+          <div class="eb-track"><div class="eb-fill" style="width:${Math.min(100,Math.abs(s.score)*50)}%;background:${s.score>0?'var(--green)':'var(--red)'};"></div></div>
+          <span class="eb-val" style="color:${s.score>0?'var(--green)':'var(--red)'}">${s.score.toFixed(3)}</span>
+        </div>
+      </td>
+      <td>${distHTML}</td>
+    </tr>`;
+  }).join('');
+
+  // Combos
+  if(combos.length > 0) {
+    document.getElementById('combos-wrap').style.display = 'block';
+    document.getElementById('combos-tbody').innerHTML = combos.map((c,i) => `
+      <tr>
+        <td style="color:var(--sub)">${i+1}</td>
+        <td style="font-size:0.55rem">${c.labelA}</td>
+        <td style="font-size:0.55rem">${c.labelB}</td>
+        <td style="color:var(--gold);font-size:0.52rem;">COMBO</td>
+        <td style="color:var(--blue)">${c.n}</td>
+        <td style="color:${wrC(c.wr)}">${c.wr.toFixed(1)}%</td>
+        <td style="color:${retC(c.avgRet)}">${c.avgRet>=0?'+':''}${c.avgRet.toFixed(3)}%</td>
+        <td style="color:var(--red)">-${c.avgDD.toFixed(2)}%</td>
+        <td style="color:${c.score>0?'var(--green)':'var(--red)'}">${c.score.toFixed(3)}</td>
+      </tr>`).join('');
+  }
+}
+
+function showDetail(idx) {
+  const s = allSignals[idx];
+  if(!s) return;
+  document.getElementById('detail').style.display = 'block';
+  document.getElementById('detail-title').textContent = s.label + ' · ' + (s.tf||'').toUpperCase();
+
+  const main = s.edge[s.mainFwd];
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-cell">
+      <div class="dc-label">OCURRENCIAS TOTALES</div>
+      <div class="dc-val" style="color:var(--blue)">${s.n}</div>
+      <div class="dc-sub">en ${s.tf?.toUpperCase()||'—'}</div>
+    </div>
+    <div class="detail-cell">
+      <div class="dc-label">WIN RATE A ${s.mainFwd} VELAS</div>
+      <div class="dc-val" style="color:${main?.wr>=50?'var(--green)':'var(--red)'}">${main?.wr?.toFixed(1)||'—'}%</div>
+      <div class="dc-sub">precio subió en ${main?.wr?.toFixed(0)||'—'}% de los casos</div>
+    </div>
+    <div class="detail-cell">
+      <div class="dc-label">DD PROMEDIO ANTES REBOTE</div>
+      <div class="dc-val" style="color:var(--red)">-${main?.avgDD?.toFixed(2)||'—'}%</div>
+      <div class="dc-sub">stop debería ser > ${main?.avgDD?.toFixed(1)||'—'}%</div>
+    </div>`;
+
+  const fwdH = Object.keys(s.edge).map(Number).sort((a,b)=>a-b);
+  document.getElementById('detail-fwd').innerHTML = fwdH.map(h => {
+    const e = s.edge[h];
+    if(!e) return `<div class="fwd-cell"><div class="fwd-h">${h} VELAS</div><div style="color:var(--sub)">—</div></div>`;
+    const col = e.avgRet>0?'var(--green)':e.avgRet>-0.5?'var(--gold)':'var(--red)';
+    return `<div class="fwd-cell">
+      <div class="fwd-h">${h} VELAS</div>
+      <div class="fwd-ret" style="color:${col}">${e.avgRet>=0?'+':''}${e.avgRet.toFixed(2)}%</div>
+      <div class="fwd-wr" style="color:${e.wr>=50?'var(--green)':'var(--red)'}">${e.wr.toFixed(0)}% suben</div>
+      <div style="font-size:0.45rem;color:var(--sub);margin-top:4px;">N=${e.n}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function sortBy(key) {
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('act'));
+  event.target.classList.add('act');
+  sortKey = key;
+  if(key==='edge') allSignals.sort((a,b)=>b.score-a.score);
+  else if(key==='wr') allSignals.sort((a,b)=>b.wr-a.wr);
+  else if(key==='ret') allSignals.sort((a,b)=>b.avgRet-a.avgRet);
+  else if(key==='n') allSignals.sort((a,b)=>b.n-a.n);
+  else if(key==='dd') allSignals.sort((a,b)=>a.avgDD-b.avgDD);
+  renderResults(allSignals, [], Object.keys(allSignals[0]?.edge||{}).map(Number));
+}
+
+log('Signal Explorer listo · Los datos eligen · Sin estrategias inventadas','var(--cyan)');
+</script>
+</body>
+</html>
