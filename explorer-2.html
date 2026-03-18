@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>APEX SIGNAL EXPLORER v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#02060c;--bg2:#050c18;--bg3:#080f1e;--wire:#0d1e30;--dim:#162b40;--muted:#1e3a55;--text:#a8c8e8;--sub:#3a6080;--faint:#254060;--green:#00ff99;--red:#ff2255;--gold:#ffbb00;--blue:#00bbff;--cyan:#00ffee;--purple:#cc44ff;--orange:#ff6600;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:100vh;}
+.page{max-width:1700px;margin:0 auto;padding:20px 14px;}
+.hdr{padding-bottom:14px;border-bottom:1px solid var(--wire);margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
+.logo{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:4px;color:var(--text);}
+.logo em{color:var(--cyan);font-style:normal;}
+.logo-sub{font-size:0.5rem;letter-spacing:3px;color:var(--sub);margin-top:5px;}
+.nav{display:flex;gap:5px;flex-wrap:wrap;}
+.nav a{font-size:0.48rem;letter-spacing:2px;padding:4px 10px;border:1px solid var(--wire);color:var(--sub);text-decoration:none;transition:all 0.2s;}
+.nav a:hover,.nav a.act{border-color:var(--cyan);color:var(--cyan);}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.panel{background:var(--bg2);border:1px solid var(--wire);}
+.ph{padding:8px 14px;border-bottom:1px solid var(--wire);font-size:0.47rem;letter-spacing:3px;color:var(--blue);}
+.pb{padding:12px;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.chip{font-size:0.52rem;letter-spacing:1px;padding:4px 10px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,238,0.04);}
+.chip.meme.on{border-color:var(--purple);color:var(--purple);background:rgba(204,68,255,0.04);}
+.tf-chips{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;}
+.tfc{font-size:0.52rem;letter-spacing:2px;padding:4px 12px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.tfc.on{border-color:var(--gold);color:var(--gold);background:rgba(255,187,0,0.04);}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.lbl{font-size:0.45rem;letter-spacing:2px;color:var(--sub);margin-bottom:3px;}
+select{width:100%;background:var(--bg3);border:1px solid var(--wire);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:6px 8px;}
+select:focus{outline:none;border-color:var(--blue);}
+.sf{font-size:0.48rem;letter-spacing:1px;padding:3px 9px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;margin:2px;}
+.sf.on{border-color:var(--green);color:var(--green);}
+.sf.short.on{border-color:var(--red);color:var(--red);}
+.info-box{background:rgba(0,255,238,0.03);border:1px solid rgba(0,255,238,0.1);padding:10px;font-size:0.52rem;line-height:1.9;color:var(--cyan);}
+.run-btn{width:100%;font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:5px;padding:14px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);cursor:pointer;transition:all 0.3s;margin-bottom:14px;}
+.run-btn:hover{background:rgba(0,255,238,0.04);}
+.run-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.prog{display:none;margin-bottom:14px;}
+.prog-hdr{display:flex;justify-content:space-between;font-size:0.5rem;color:var(--sub);margin-bottom:4px;}
+.prog-bar{height:2px;background:var(--wire);}
+.prog-fill{height:100%;background:var(--cyan);transition:width 0.2s;width:0%;}
+.prog-msg{font-size:0.5rem;color:var(--cyan);margin-top:4px;min-height:16px;}
+#results{display:none;}
+.summary-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px;}
+.scard{background:var(--bg2);border:1px solid var(--wire);padding:10px;text-align:center;}
+.sc-l{font-size:0.42rem;letter-spacing:2px;color:var(--sub);margin-bottom:3px;}
+.sc-v{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;line-height:1;}
+.asset-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.atab{font-size:0.5rem;letter-spacing:1px;padding:5px 12px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;transition:all 0.15s;}
+.atab.act{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,238,0.05);}
+.atab.meme-tab.act{border-color:var(--purple);color:var(--purple);background:rgba(204,68,255,0.05);}
+.table-wrap{background:var(--bg2);border:1px solid var(--wire);margin-bottom:14px;overflow-x:auto;}
+.table-hdr{padding:8px 12px;border-bottom:1px solid var(--wire);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.th-title{font-size:0.46rem;letter-spacing:3px;color:var(--blue);}
+.sort-btns{display:flex;gap:4px;}
+.sort-btn{font-size:0.42rem;letter-spacing:1px;padding:2px 7px;border:1px solid var(--wire);background:transparent;color:var(--sub);cursor:pointer;}
+.sort-btn.act{border-color:var(--cyan);color:var(--cyan);}
+table{width:100%;border-collapse:collapse;min-width:1000px;}
+th{font-size:0.42rem;letter-spacing:2px;color:var(--sub);padding:7px 8px;border-bottom:1px solid var(--wire);text-align:left;font-weight:400;cursor:pointer;white-space:nowrap;}
+td{padding:6px 8px;border-bottom:1px solid rgba(13,30,48,0.8);font-size:0.56rem;white-space:nowrap;}
+tr:hover td{background:rgba(0,187,255,0.02);}
+tr.top-edge td{background:rgba(0,255,153,0.025);}
+tr.top-short td{background:rgba(255,34,85,0.025);}
+.dir-long{color:var(--green);font-size:0.45rem;}
+.dir-short{color:var(--red);font-size:0.45rem;}
+.dir-both{color:var(--gold);font-size:0.45rem;}
+.edge-bar{display:flex;align-items:center;gap:5px;}
+.eb-track{width:60px;height:5px;background:var(--wire);border-radius:2px;flex-shrink:0;}
+.eb-fill{height:100%;border-radius:2px;}
+.dist-mini{display:flex;align-items:flex-end;gap:1px;height:18px;}
+.dm-bar{width:5px;background:var(--dim);border-radius:1px;}
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px;}
+.compare-card{background:var(--bg2);border:1px solid var(--wire);padding:12px;}
+.cc-sym{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;letter-spacing:2px;margin-bottom:8px;}
+.cc-row{display:flex;justify-content:space-between;font-size:0.5rem;padding:3px 0;border-bottom:1px solid rgba(13,30,48,0.5);}
+.log-wrap{background:var(--bg2);border:1px solid var(--wire);padding:10px;}
+.log-t{font-size:0.42rem;letter-spacing:3px;color:var(--sub);margin-bottom:6px;}
+.log-scroll{max-height:100px;overflow-y:auto;}
+.log-line{font-size:0.5rem;padding:2px 0;border-bottom:1px solid rgba(13,30,48,0.4);display:flex;gap:8px;}
+.log-ts{color:var(--faint);flex-shrink:0;min-width:58px;}
+@media(max-width:900px){.controls{grid-template-columns:1fr;}.summary-row{grid-template-columns:repeat(3,1fr);}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="hdr">
+  <div>
+    <div class="logo">SIGNAL <em>EXPLORER</em> <span style="color:var(--sub);font-size:1.8rem;">V2</span></div>
+    <div class="logo-sub">MULTI-ACTIVO · 5m/15m/30m/1H/4H · LONG Y SHORT · MEMES · DIVERGENCIAS · LOS DATOS DECIDEN</div>
+    <div class="nav" style="margin-top:8px;">
+      <a href="trading-system-v1.html">DASHBOARD</a>
+      <a href="agent.html">AGENTE</a>
+      <a href="analytics.html">ANALYTICS</a>
+      <a href="explorer.html" class="act">EXPLORER</a>
+    </div>
+  </div>
+</div>
+<div class="controls">
+  <div class="panel">
+    <div class="ph">ACTIVOS</div>
+    <div class="pb">
+      <div class="lbl" style="margin-bottom:5px;">PRINCIPALES</div>
+      <div class="chips" id="asset-chips">
+        <button class="chip on" data-a="BTCUSDT" onclick="toggleAsset(this)">BTC</button>
+        <button class="chip on" data-a="ETHUSDT" onclick="toggleAsset(this)">ETH</button>
+        <button class="chip on" data-a="SOLUSDT" onclick="toggleAsset(this)">SOL</button>
+        <button class="chip on" data-a="XRPUSDT" onclick="toggleAsset(this)">XRP</button>
+        <button class="chip on" data-a="LTCUSDT" onclick="toggleAsset(this)">LTC</button>
+        <button class="chip on" data-a="LINKUSDT" onclick="toggleAsset(this)">LINK</button>
+        <button class="chip on" data-a="BNBUSDT" onclick="toggleAsset(this)">BNB</button>
+      </div>
+      <div class="lbl" style="margin-bottom:5px;">MEMES / ALTCOINS</div>
+      <div class="chips">
+        <button class="chip meme" data-a="DOGEUSDT" onclick="toggleAsset(this)">DOGE</button>
+        <button class="chip meme" data-a="SHIBUSDT" onclick="toggleAsset(this)">SHIB</button>
+        <button class="chip meme" data-a="PEPEUSDT" onclick="toggleAsset(this)">PEPE</button>
+        <button class="chip meme" data-a="WIFUSDT"  onclick="toggleAsset(this)">WIF</button>
+        <button class="chip meme" data-a="SUIUSDT"  onclick="toggleAsset(this)">SUI</button>
+        <button class="chip meme" data-a="APTUSDT"  onclick="toggleAsset(this)">APT</button>
+      </div>
+      <div class="lbl" style="margin-bottom:5px;">TIMEFRAMES</div>
+      <div class="tf-chips">
+        <button class="tfc on" data-tf="5m"  onclick="toggleTF(this)">5m</button>
+        <button class="tfc on" data-tf="15m" onclick="toggleTF(this)">15m</button>
+        <button class="tfc on" data-tf="30m" onclick="toggleTF(this)">30m</button>
+        <button class="tfc on" data-tf="1h"  onclick="toggleTF(this)">1H</button>
+        <button class="tfc on" data-tf="4h"  onclick="toggleTF(this)">4H</button>
+      </div>
+      <div class="lbl" style="margin-bottom:5px;">TIPOS DE SEÑAL</div>
+      <div style="display:flex;flex-wrap:wrap;">
+        <button class="sf on"       data-t="RSI_OS"  onclick="toggleSig(this)">RSI OVERSOLD (L)</button>
+        <button class="sf on short" data-t="RSI_OB"  onclick="toggleSig(this)">RSI OVERBOUGHT (S)</button>
+        <button class="sf on"       data-t="BB"      onclick="toggleSig(this)">BOLLINGER</button>
+        <button class="sf on"       data-t="ROC"     onclick="toggleSig(this)">CAÍDA FUERTE (L)</button>
+        <button class="sf on short" data-t="ROC_UP"  onclick="toggleSig(this)">SUBIDA FUERTE (S)</button>
+        <button class="sf on"       data-t="VOL"     onclick="toggleSig(this)">VOLUMEN SPIKE</button>
+        <button class="sf on"       data-t="MACD"    onclick="toggleSig(this)">MACD CRUCES</button>
+        <button class="sf on short" data-t="DIV"     onclick="toggleSig(this)">DIVERGENCIAS RSI</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph">PARÁMETROS</div>
+    <div class="pb">
+      <div class="row-3">
+        <div><div class="lbl">PERÍODO</div>
+          <select id="cfg-period"><option value="365">1 año</option><option value="730" selected>2 años</option><option value="1095">3 años</option></select></div>
+        <div><div class="lbl">RSI A PROBAR</div>
+          <select id="cfg-rsi"><option value="all" selected>Todos (2-20)</option><option value="fast">Rápidos (2-10)</option><option value="std">Estándar (7-21)</option></select></div>
+        <div><div class="lbl">HORIZONTES</div>
+          <select id="cfg-fwd"><option value="3,6,12,24,48" selected>3,6,12,24,48 velas</option><option value="6,12,24,48,96">6,12,24,48,96</option></select></div>
+      </div>
+      <div class="row-2">
+        <div><div class="lbl">MÍN. OCURRENCIAS</div>
+          <select id="cfg-minN"><option value="15" selected>15 señales</option><option value="20">20</option><option value="10">10</option></select></div>
+        <div><div class="lbl">VISTA RESULTADOS</div>
+          <select id="cfg-view"><option value="unified" selected>Todas juntas</option><option value="byasset">Por activo</option><option value="compare">Comparativa</option></select></div>
+      </div>
+      <div class="info-box" style="margin-top:8px;">
+        LONG ▲: mide si el precio SUBE después<br>
+        SHORT ▼: mide si el precio BAJA después<br>
+        EDGE = WR × retorno promedio<br>
+        Tabs por activo · Sorteable · Top 100 señales
+      </div>
+    </div>
+  </div>
+</div>
+<button class="run-btn" id="run-btn" onclick="runExplorer()">EXPLORAR SEÑALES</button>
+<div class="prog" id="prog">
+  <div class="prog-hdr"><span id="prog-label">INICIANDO</span><span id="prog-pct">0%</span></div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="prog-msg" id="prog-msg"></div>
+</div>
+<div id="results">
+  <div class="summary-row" id="summary-row"></div>
+  <div class="asset-tabs" id="asset-tabs"></div>
+  <div class="compare-grid" id="compare-view" style="display:none;"></div>
+  <div class="table-wrap" id="main-table-wrap">
+    <div class="table-hdr">
+      <span class="th-title" id="table-title">TODAS LAS SEÑALES — TOP 100</span>
+      <div class="sort-btns">
+        <button class="sort-btn act" onclick="sortBy('edge',this)">EDGE</button>
+        <button class="sort-btn" onclick="sortBy('wr',this)">WIN RATE</button>
+        <button class="sort-btn" onclick="sortBy('ret',this)">RETORNO</button>
+        <button class="sort-btn" onclick="sortBy('n',this)">OCURR.</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>ACTIVO</th><th>SEÑAL</th><th>DIR</th><th>TF</th>
+        <th>OCURR.</th><th>WIN RATE</th><th>RET PROM</th>
+        <th>3v</th><th>6v</th><th>12v</th><th>24v</th><th>48v</th>
+        <th>DD PROM</th><th>EDGE</th><th>DIST</th>
+      </tr></thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+  </div>
+</div>
+<div class="log-wrap">
+  <div class="log-t">LOG</div>
+  <div class="log-scroll" id="log-scroll"></div>
+</div>
+</div>
+<script>
+const WORKER='https://apex-agent.josepsanz2000.workers.dev';
+let selAssets=new Set(['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','LTCUSDT','LINKUSDT','BNBUSDT']);
+let selTFs=new Set(['5m','15m','30m','1h','4h']);
+let selSigs=new Set(['RSI_OS','RSI_OB','BB','ROC','ROC_UP','VOL','MACD','DIV']);
+let allResults={};
+let flatSignals=[];
+let curTab='ALL';
+let logs=[];
+
+function toggleAsset(el){el.classList.toggle('on');const a=el.dataset.a;selAssets.has(a)?selAssets.delete(a):selAssets.add(a);}
+function toggleTF(el){el.classList.toggle('on');const tf=el.dataset.tf;selTFs.has(tf)?selTFs.delete(tf):selTFs.add(tf);}
+function toggleSig(el){el.classList.toggle('on');const t=el.dataset.t;selSigs.has(t)?selSigs.delete(t):selSigs.add(t);}
+
+function log(text,color='var(--sub)'){
+  const t=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.unshift({t,text,color});if(logs.length>60)logs.pop();
+  document.getElementById('log-scroll').innerHTML=logs.slice(0,15).map(l=>`<div class="log-line"><span class="log-ts">${l.t}</span><span style="color:${l.color}">${l.text}</span></div>`).join('');
+}
+function setProgress(pct,label,msg){
+  document.getElementById('prog-fill').style.width=Math.round(pct)+'%';
+  document.getElementById('prog-pct').textContent=Math.round(pct)+'%';
+  if(label)document.getElementById('prog-label').textContent=label;
+  if(msg)document.getElementById('prog-msg').textContent=msg;
+}
+
+async function fetchCandles(symbol,interval,days){
+  const endMs=Date.now(),startMs=endMs-days*86400000;
+  const all=[];let cur=startMs;
+  while(cur<endMs){
+    const url=`${WORKER}/klines?symbol=${symbol}&interval=${interval}&startTime=${cur}&endTime=${endMs}&limit=1000`;
+    const res=await fetch(url);if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();if(!Array.isArray(data)||data.length===0)break;
+    for(const k of data)all.push({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]});
+    cur=data[data.length-1][0]+1;if(data.length<1000)break;
+    await new Promise(r=>setTimeout(r,60));
+  }
+  return all;
+}
+
+function calcRSI(closes,period){
+  const r=new Array(closes.length).fill(null);
+  if(closes.length<period+1)return r;
+  let ag=0,al=0;
+  for(let i=1;i<=period;i++){const d=closes[i]-closes[i-1];if(d>0)ag+=d;else al-=d;}
+  ag/=period;al/=period;
+  r[period]=al===0?100:100-100/(1+ag/al);
+  for(let i=period+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(period-1)+(d>0?d:0))/period;al=(al*(period-1)+(d<0?-d:0))/period;
+    r[i]=al===0?100:100-100/(1+ag/al);
+  }
+  return r;
+}
+function calcBB(closes,p=20,m=2){
+  return closes.map((_,i)=>{
+    if(i<p-1)return null;
+    const sl=closes.slice(i-p+1,i+1),mean=sl.reduce((a,b)=>a+b,0)/p;
+    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/p);
+    return{u:mean+m*std,l:mean-m*std,mid:mean,bw:(2*m*std)/mean};
+  });
+}
+function calcVol(volumes,p=20){return volumes.map((_,i)=>i<p?1:volumes[i]/(volumes.slice(i-p,i).reduce((a,b)=>a+b,0)/p));}
+function calcMACD(closes,f=12,s=26,sig=9){
+  const ema=(arr,p)=>{const k=2/(p+1);let e=[arr[0]];for(let i=1;i<arr.length;i++)e.push(arr[i]*k+e[i-1]*(1-k));return e;};
+  const ml=ema(closes,f).map((v,i)=>v-ema(closes,s)[i]);
+  return ml.map((v,i)=>v-ema(ml,sig)[i]);
+}
+function calcROC(closes,p){return closes.map((_,i)=>i<p?null:(closes[i]-closes[i-p])/closes[i-p]*100);}
+
+function measureEdge(candles,idxs,fwdH,direction){
+  const results={};
+  for(const h of fwdH){
+    const rets=[],dds=[];
+    for(const i of idxs){
+      if(i+h>=candles.length)continue;
+      const entry=candles[i+1]?.o||candles[i].c;
+      const exit=candles[i+h].c;
+      const ret=direction==='SHORT'?(entry-exit)/entry*100:(exit-entry)/entry*100;
+      let extrema=entry;
+      for(let j=i+1;j<=i+h&&j<candles.length;j++)
+        extrema=direction==='SHORT'?Math.max(extrema,candles[j].h):Math.min(extrema,candles[j].l);
+      const dd=Math.abs(extrema-entry)/entry*100;
+      rets.push(ret);dds.push(dd);
+    }
+    if(!rets.length){results[h]=null;continue;}
+    const pos=rets.filter(r=>r>0).length;
+    results[h]={n:rets.length,avgRet:rets.reduce((a,b)=>a+b,0)/rets.length,wr:pos/rets.length*100,avgDD:dds.reduce((a,b)=>a+b,0)/dds.length,rets};
+  }
+  return results;
+}
+
+function generateSignals(candles,asset,fwdH,rsiRange,minN,enabledTypes){
+  const closes=candles.map(c=>c.c),volumes=candles.map(c=>c.v);
+  const signals=[];
+  const mainFwd=fwdH[2]||fwdH[0];
+  const maxFwd=Math.max(...fwdH);
+
+  function addSig(sig){
+    if(!sig||sig.n<minN)return;
+    const main=sig.edge[mainFwd];if(!main)return;
+    sig.score=main.wr/100*main.avgRet;sig.wr=main.wr;sig.avgRet=main.avgRet;sig.avgDD=main.avgDD;
+    sig.asset=asset;sig.mainFwd=mainFwd;signals.push(sig);
+  }
+
+  if(enabledTypes.has('RSI_OS')){
+    for(const period of rsiRange){
+      const rsiArr=calcRSI(closes,period);
+      for(let thresh=15;thresh<=45;thresh+=5){
+        const idxs=[];
+        for(let i=period+1;i<candles.length-maxFwd-1;i++)if(rsiArr[i]!==null&&rsiArr[i]<thresh)idxs.push(i);
+        if(idxs.length<minN)continue;
+        addSig({id:`RSI(${period})<${thresh}`,type:'RSI_OS',label:`RSI(${period}) < ${thresh}`,direction:'LONG',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});
+      }
+    }
+  }
+  if(enabledTypes.has('RSI_OB')){
+    for(const period of rsiRange){
+      const rsiArr=calcRSI(closes,period);
+      for(let thresh=55;thresh<=85;thresh+=5){
+        const idxs=[];
+        for(let i=period+1;i<candles.length-maxFwd-1;i++)if(rsiArr[i]!==null&&rsiArr[i]>thresh)idxs.push(i);
+        if(idxs.length<minN)continue;
+        addSig({id:`RSI(${period})>${thresh}`,type:'RSI_OB',label:`RSI(${period}) > ${thresh}`,direction:'SHORT',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'SHORT'),idxs});
+      }
+    }
+  }
+  if(enabledTypes.has('BB')){
+    const bbArr=calcBB(closes);
+    {const idxs=[];for(let i=20;i<candles.length-maxFwd-1;i++)if(bbArr[i]&&candles[i].c<=bbArr[i].l*1.005)idxs.push(i);
+    addSig({id:'BB_LOWER',type:'BB',label:'BB inferior (LONG)',direction:'LONG',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});}
+    {const idxs=[];for(let i=20;i<candles.length-maxFwd-1;i++)if(bbArr[i]&&candles[i].c>=bbArr[i].u*0.995)idxs.push(i);
+    addSig({id:'BB_UPPER',type:'BB',label:'BB superior (SHORT)',direction:'SHORT',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'SHORT'),idxs});}
+  }
+  if(enabledTypes.has('ROC')){
+    for(const [period,thresh] of [[5,-5],[10,-5],[10,-10],[20,-10],[20,-15]]){
+      const rocArr=calcROC(closes,period);
+      const idxs=[];for(let i=period;i<candles.length-maxFwd-1;i++)if(rocArr[i]!==null&&rocArr[i]<thresh)idxs.push(i);
+      if(idxs.length<minN)continue;
+      addSig({id:`ROC(${period})<${thresh}%`,type:'ROC',label:`ROC(${period}) < ${thresh}% (caída→LONG)`,direction:'LONG',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});
+    }
+  }
+  if(enabledTypes.has('ROC_UP')){
+    for(const [period,thresh] of [[5,5],[10,5],[10,10],[20,10],[20,15]]){
+      const rocArr=calcROC(closes,period);
+      const idxs=[];for(let i=period;i<candles.length-maxFwd-1;i++)if(rocArr[i]!==null&&rocArr[i]>thresh)idxs.push(i);
+      if(idxs.length<minN)continue;
+      addSig({id:`ROC(${period})>+${thresh}%_S`,type:'ROC_UP',label:`ROC(${period}) > +${thresh}% (subida→SHORT)`,direction:'SHORT',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'SHORT'),idxs});
+    }
+  }
+  if(enabledTypes.has('VOL')){
+    const volRel=calcVol(volumes);
+    for(const mult of [1.5,2.0,3.0]){
+      const idxs=[];for(let i=20;i<candles.length-maxFwd-1;i++)if(volRel[i]>=mult)idxs.push(i);
+      if(idxs.length<minN)continue;
+      addSig({id:`VOL>${mult}x`,type:'VOL',label:`Volumen > ${mult}× promedio`,direction:'AMBOS',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});
+    }
+  }
+  if(enabledTypes.has('MACD')){
+    for(const [f,s,sig] of [[6,13,5],[12,26,9],[3,10,16]]){
+      const hist=calcMACD(closes,f,s,sig);
+      {const idxs=[];for(let i=s+1;i<candles.length-maxFwd-1;i++)if(hist[i-1]<0&&hist[i]>0)idxs.push(i);
+      if(idxs.length>=minN)addSig({id:`MACD(${f}/${s})UP`,type:'MACD',label:`MACD(${f}/${s}) cruce alcista`,direction:'LONG',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});}
+      {const idxs=[];for(let i=s+1;i<candles.length-maxFwd-1;i++)if(hist[i-1]>0&&hist[i]<0)idxs.push(i);
+      if(idxs.length>=minN)addSig({id:`MACD(${f}/${s})DN`,type:'MACD',label:`MACD(${f}/${s}) cruce bajista`,direction:'SHORT',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'SHORT'),idxs});}
+    }
+  }
+  if(enabledTypes.has('DIV')){
+    for(const period of [9,14]){
+      const rsiArr=calcRSI(closes,period);
+      {const idxs=[];
+      for(let i=period+10;i<candles.length-maxFwd-1;i++){
+        if(rsiArr[i]===null||rsiArr[i-5]===null)continue;
+        if(candles[i].l<candles[i-5].l&&rsiArr[i]>rsiArr[i-5]&&rsiArr[i]<40)idxs.push(i);
+      }
+      if(idxs.length>=minN)addSig({id:`DIV_BULL_${period}`,type:'DIV',label:`Divergencia alcista RSI(${period})`,direction:'LONG',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'LONG'),idxs});}
+      {const idxs=[];
+      for(let i=period+10;i<candles.length-maxFwd-1;i++){
+        if(rsiArr[i]===null||rsiArr[i-5]===null)continue;
+        if(candles[i].h>candles[i-5].h&&rsiArr[i]<rsiArr[i-5]&&rsiArr[i]>60)idxs.push(i);
+      }
+      if(idxs.length>=minN)addSig({id:`DIV_BEAR_${period}`,type:'DIV',label:`Divergencia bajista RSI(${period})`,direction:'SHORT',n:idxs.length,edge:measureEdge(candles,idxs,fwdH,'SHORT'),idxs});}
+    }
+  }
+  return signals.sort((a,b)=>b.score-a.score);
+}
+
+async function runExplorer(){
+  const btn=document.getElementById('run-btn');
+  btn.disabled=true;btn.textContent='⏳ ANALIZANDO...';
+  document.getElementById('prog').style.display='block';
+  document.getElementById('results').style.display='none';
+  allResults={};flatSignals=[];logs=[];
+
+  const days=parseInt(document.getElementById('cfg-period').value);
+  const rsiCfg=document.getElementById('cfg-rsi').value;
+  const fwdStr=document.getElementById('cfg-fwd').value;
+  const minN=parseInt(document.getElementById('cfg-minN').value);
+  const fwdH=fwdStr.split(',').map(Number);
+  const tfs=[...selTFs];
+  const assets=[...selAssets];
+  const view=document.getElementById('cfg-view').value;
+  const rsiRange=rsiCfg==='fast'?Array.from({length:9},(_,i)=>i+2):rsiCfg==='std'?Array.from({length:15},(_,i)=>i+7):Array.from({length:19},(_,i)=>i+2);
+
+  log(`Iniciando: ${assets.length} activos · TF: ${tfs.join(',')} · ${days} días`,'var(--cyan)');
+  const total=assets.length*tfs.length;let done=0;
+
+  for(const asset of assets){
+    allResults[asset]=[];
+    for(const tf of tfs){
+      setProgress(done/total*95,`${asset} ${tf}`,`Descargando...`);
+      try{
+        const candles=await fetchCandles(asset,tf,days);
+        if(candles.length<200){done++;continue;}
+        const sigs=generateSignals(candles,asset,fwdH,rsiRange,minN,selSigs);
+        for(const s of sigs){s.tf=tf;allResults[asset].push(s);}
+        log(`✅ ${asset} ${tf.toUpperCase()}: ${sigs.length} señales`,'var(--green)');
+      }catch(e){log(`❌ ${asset} ${tf}: ${e.message}`,'var(--red)');}
+      done++;await new Promise(r=>setTimeout(r,0));
+    }
+  }
+
+  for(const sigs of Object.values(allResults))for(const s of sigs)flatSignals.push(s);
+  flatSignals.sort((a,b)=>b.score-a.score);
+
+  const top=flatSignals[0];
+  setProgress(100,'COMPLETADO',`${flatSignals.length} señales · top: ${top?.id||'—'} ${top?.asset?.replace('USDT','')||''} ${top?.tf||''}`);
+  log(`Completado · ${flatSignals.length} señales · top score: ${top?.score?.toFixed(3)||'—'}`,'var(--cyan)');
+  renderAll(view,fwdH);
+  btn.disabled=false;btn.textContent='EXPLORAR SEÑALES';
+}
+
+function renderAll(view,fwdH){
+  document.getElementById('results').style.display='block';
+  const longPos=flatSignals.filter(s=>(s.direction==='LONG'||s.direction==='AMBOS')&&s.score>0);
+  const shortPos=flatSignals.filter(s=>s.direction==='SHORT'&&s.score>0);
+  const top=flatSignals[0];
+  document.getElementById('summary-row').innerHTML=`
+    <div class="scard"><div class="sc-l">TOTAL SEÑALES</div><div class="sc-v" style="color:var(--blue)">${flatSignals.length}</div></div>
+    <div class="scard"><div class="sc-l">LONG CON EDGE</div><div class="sc-v" style="color:var(--green)">${longPos.length}</div></div>
+    <div class="scard"><div class="sc-l">SHORT CON EDGE</div><div class="sc-v" style="color:var(--red)">${shortPos.length}</div></div>
+    <div class="scard"><div class="sc-l">MEJOR SCORE</div><div class="sc-v" style="color:var(--cyan)">${(top?.score||0).toFixed(3)}</div></div>
+    <div class="scard"><div class="sc-l">MEJOR ACTIVO</div><div class="sc-v" style="color:var(--gold)">${(top?.asset||'—').replace('USDT','')}</div></div>
+    <div class="scard"><div class="sc-l">MEJOR TF</div><div class="sc-v" style="color:var(--gold)">${(top?.tf||'—').toUpperCase()}</div></div>`;
+
+  const tabs=['ALL',...Object.keys(allResults)];
+  const MEMES=['DOGEUSDT','SHIBUSDT','PEPEUSDT','WIFUSDT','SUIUSDT','APTUSDT'];
+  document.getElementById('asset-tabs').innerHTML=tabs.map(a=>{
+    const isMeme=MEMES.includes(a);
+    const label=a==='ALL'?'TODOS':a.replace('USDT','');
+    const count=a==='ALL'?flatSignals.length:(allResults[a]||[]).length;
+    return `<button class="atab${isMeme?' meme-tab':''}${a===curTab?' act':''}" onclick="switchTab('${a}',${JSON.stringify(fwdH)})">${label} <span style="opacity:0.5;font-size:0.8em">${count}</span></button>`;
+  }).join('');
+
+  if(view==='compare')renderCompare(fwdH);
+  else renderTable(curTab==='ALL'?flatSignals:(allResults[curTab]||[]),fwdH);
+}
+
+function switchTab(asset,fwdH){
+  curTab=asset;
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('act'));
+  event.target.classList.add('act');
+  renderTable(asset==='ALL'?flatSignals:(allResults[asset]||[]),fwdH);
+}
+
+function renderTable(signals,fwdH){
+  document.getElementById('compare-view').style.display='none';
+  document.getElementById('main-table-wrap').style.display='block';
+  const retC=v=>v>2?'var(--green)':v>0.5?'#00ccaa':v>0?'var(--gold)':v>-1?'var(--orange)':'var(--red)';
+  const wrC=v=>v>65?'var(--green)':v>50?'#00ccaa':v>40?'var(--gold)':'var(--red)';
+
+  document.getElementById('results-tbody').innerHTML=signals.slice(0,100).map((s,idx)=>{
+    const isShort=s.direction==='SHORT';
+    const isTopL=idx<5&&s.score>0&&!isShort;
+    const isTopS=idx<5&&s.score>0&&isShort;
+    const dirHtml=s.direction==='LONG'?'<span class="dir-long">LONG▲</span>':s.direction==='SHORT'?'<span class="dir-short">SHORT▼</span>':'<span class="dir-both">AMBOS</span>';
+    const fwdCells=fwdH.map(h=>{
+      const e=s.edge[h];if(!e)return '<td style="color:var(--faint)">—</td>';
+      return `<td style="color:${retC(e.avgRet)}">${e.avgRet>=0?'+':''}${e.avgRet.toFixed(2)}%<br><span style="font-size:0.42rem;color:var(--sub)">${e.wr.toFixed(0)}%</span></td>`;
+    }).join('');
+    const main=s.edge[s.mainFwd];
+    let dist='<div class="dist-mini">';
+    if(main?.rets){
+      const bins=[-5,-3,-1,0,1,3,5];
+      const counts=bins.map((b,i)=>main.rets.filter(r=>r>b&&r<=(bins[i+1]||99)).length);
+      const maxC=Math.max(...counts,1);
+      dist+=counts.map((c,i)=>`<div class="dm-bar" style="height:${Math.round(c/maxC*16)+2}px;background:${bins[i]>=0?'var(--green)':'var(--red)'};opacity:0.7"></div>`).join('');
+    }
+    dist+='</div>';
+    const sc=s.score>1?'var(--green)':s.score>0?'#00ccaa':s.score>-0.5?'var(--gold)':'var(--red)';
+    return `<tr class="${isTopL?'top-edge':isTopS?'top-short':''}">
+      <td style="color:var(--sub)">${idx+1}</td>
+      <td><strong style="font-family:'Syne',sans-serif;font-size:0.9rem">${s.asset.replace('USDT','')}</strong></td>
+      <td style="font-size:0.53rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${s.label}</td>
+      <td>${dirHtml}</td>
+      <td style="color:var(--gold);font-size:0.5rem">${s.tf?.toUpperCase()}</td>
+      <td style="color:var(--blue)">${s.n}</td>
+      <td style="color:${wrC(s.wr)}">${s.wr.toFixed(1)}%</td>
+      <td style="color:${retC(s.avgRet)}">${s.avgRet>=0?'+':''}${s.avgRet.toFixed(3)}%</td>
+      ${fwdCells}
+      <td style="color:var(--red)">-${s.avgDD.toFixed(2)}%</td>
+      <td><div class="edge-bar"><div class="eb-track"><div class="eb-fill" style="width:${Math.min(100,Math.abs(s.score)*30)}%;background:${sc}"></div></div><span style="color:${sc};font-size:0.53rem">${s.score.toFixed(3)}</span></div></td>
+      <td>${dist}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCompare(fwdH){
+  document.getElementById('compare-view').style.display='grid';
+  document.getElementById('main-table-wrap').style.display='none';
+  const MEMES=['DOGEUSDT','SHIBUSDT','PEPEUSDT','WIFUSDT','SUIUSDT','APTUSDT'];
+  document.getElementById('compare-view').innerHTML=Object.entries(allResults).map(([asset,sigs])=>{
+    if(!sigs.length)return'';
+    const topL=sigs.filter(s=>s.direction==='LONG').slice(0,3);
+    const topS=sigs.filter(s=>s.direction==='SHORT').slice(0,3);
+    const col=MEMES.includes(asset)?'var(--purple)':'var(--cyan)';
+    return `<div class="compare-card">
+      <div class="cc-sym" style="color:${col}">${asset.replace('USDT','')}</div>
+      <div style="font-size:0.45rem;color:var(--sub);margin-bottom:8px;">Top score: ${(sigs[0]?.score||0).toFixed(3)} · ${sigs.length} señales</div>
+      <div style="font-size:0.44rem;color:var(--green);margin-bottom:4px;">TOP LONG</div>
+      ${topL.map(s=>`<div class="cc-row"><span style="font-size:0.48rem;overflow:hidden;max-width:180px;text-overflow:ellipsis">${s.label.substring(0,28)}</span><span style="color:var(--green)">${s.score.toFixed(2)}</span></div>`).join('')}
+      <div style="font-size:0.44rem;color:var(--red);margin:6px 0 4px;">TOP SHORT</div>
+      ${topS.map(s=>`<div class="cc-row"><span style="font-size:0.48rem;overflow:hidden;max-width:180px;text-overflow:ellipsis">${s.label.substring(0,28)}</span><span style="color:var(--red)">${s.score.toFixed(2)}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function sortBy(key,btn){
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  const sigs=curTab==='ALL'?flatSignals:(allResults[curTab]||[]);
+  const sorted=[...sigs];
+  if(key==='edge')sorted.sort((a,b)=>b.score-a.score);
+  else if(key==='wr')sorted.sort((a,b)=>b.wr-a.wr);
+  else if(key==='ret')sorted.sort((a,b)=>b.avgRet-a.avgRet);
+  else if(key==='n')sorted.sort((a,b)=>b.n-a.n);
+  const fwdH=document.getElementById('cfg-fwd').value.split(',').map(Number);
+  renderTable(sorted,fwdH);
+}
+
+log('Explorer v2 listo · Multi-activo · LONG+SHORT · Memes · 5m al 4H','var(--cyan)');
+</script>
+</body>
+</html>
