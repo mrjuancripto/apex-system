@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX SYSTEM v5 — Trading Intelligence</title>
+<title>APEX SYSTEM v6 — Whale Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -611,7 +611,7 @@
 
   <!-- HEADER -->
   <header>
-    <div class="logo">APEX<span> SYSTEM</span> <span style="font-size:0.9rem;color:var(--muted2)">v5.0</span></div>
+    <div class="logo">APEX<span> SYSTEM</span> <span style="font-size:0.9rem;color:var(--muted2)">v6.0</span></div>
     <div class="header-right">
       <div class="live-badge">
         <div class="live-dot"></div>
@@ -1317,9 +1317,88 @@
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-text">APEX SYSTEM v5.0 — PROTOTIPO — SOLO SIMULACIÓN</div>
+    <div class="footer-text">APEX SYSTEM v6.0 — WHALE INTELLIGENCE — SOLO EDUCATIVO</div>
     <div class="footer-text">DATOS HISTÓRICOS · NO FINANCIERO · <span class="blink">█</span></div>
   </footer>
+
+
+  <!-- ═══════════════════════════════════════════════════
+       NUEVOS MÓDULOS v6.0 — INDICADORES PROFESIONALES
+  ════════════════════════════════════════════════════ -->
+  <div style="margin-top:24px">
+    <div class="section-title">🐋 RADAR DE BALLENAS — INDICADORES INSTITUCIONALES</div>
+
+    <div class="grid-2" style="margin-bottom:16px">
+
+      <!-- OPEN INTEREST + LONG/SHORT RATIO -->
+      <div class="card">
+        <div class="card-title">📊 OPEN INTEREST BTC · FUTUROS</div>
+        <div style="text-align:center;margin-bottom:12px">
+          <div id="oi-value" style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--accent4)">--</div>
+          <div style="font-size:0.65rem;color:var(--muted2);font-family:'Space Mono',monospace">CONTRATOS ABIERTOS TOTALES</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;margin-bottom:4px">
+            <span style="color:var(--accent)">LONGS <span id="oi-long-pct">--%</span></span>
+            <span style="color:var(--accent2)">SHORTS <span id="oi-short-pct">--%</span></span>
+          </div>
+          <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:flex">
+            <div id="oi-long-bar"  style="height:100%;width:50%;background:var(--accent);transition:width 1s ease"></div>
+            <div id="oi-short-bar" style="height:100%;width:50%;background:var(--accent2);transition:width 1s ease"></div>
+          </div>
+        </div>
+        <div id="oi-signal" style="font-size:0.78rem;line-height:1.5;padding:8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid var(--border)">Cargando...</div>
+      </div>
+
+      <!-- ON-CHAIN VOLUME BTC -->
+      <div class="card">
+        <div class="card-title">⛓️ VOLUMEN ON-CHAIN BTC · 5 DÍAS</div>
+        <div style="display:flex;align-items:flex-end;justify-content:center;gap:6px;height:48px;margin-bottom:12px" id="flow-bars">
+          <div style="color:var(--muted2);font-size:0.7rem;align-self:center">Cargando...</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <div style="font-size:0.65rem;color:var(--muted2);font-family:'Space Mono',monospace">VS PROMEDIO</div>
+            <div id="flow-ratio" style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent3)">--</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:0.65rem;color:var(--muted2);font-family:'Space Mono',monospace">CAMBIO 24H</div>
+            <div id="flow-change" style="font-family:'Space Mono',monospace;font-size:1rem;color:var(--accent)">--</div>
+          </div>
+        </div>
+        <div id="flow-signal" style="font-size:0.78rem;line-height:1.5;padding:8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid var(--border)">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- FUNDING RATES MULTI-ACTIVO -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">💸 FUNDING RATES — TODOS LOS ACTIVOS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+        <div id="funding-multi">Cargando...</div>
+        <div>
+          <div style="font-size:0.65rem;color:var(--muted2);font-family:'Space Mono',monospace;margin-bottom:8px">QUÉ SIGNIFICA</div>
+          <div id="funding-signal" style="font-size:0.78rem;line-height:1.5;color:var(--muted2)">Cargando...</div>
+          <div style="margin-top:12px;font-size:0.7rem;color:var(--muted2);line-height:1.6;border-top:1px solid var(--border);padding-top:10px">
+            <div><span style="color:var(--accent2)">+0.1%+</span> Longs pagan mucho → corrección probable</div>
+            <div><span style="color:var(--accent3)">+0.01% a +0.08%</span> → Mercado normal</div>
+            <div><span style="color:var(--accent)">Negativo</span> Shorts pagan → posible rebote</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTAS EDUCATIVAS -->
+    <div class="card">
+      <div class="card-title">🚨 ALERTAS EDUCATIVAS — TIEMPO REAL</div>
+      <div style="font-size:0.72rem;color:var(--muted2);margin-bottom:12px;font-family:'Space Mono',monospace">
+        Las alertas se generan automáticamente cuando los indicadores de ballenas alcanzan niveles históricos extremos
+      </div>
+      <div id="alert-feed">
+        <div style="color:var(--muted2);font-size:0.8rem;padding:8px">Iniciando monitoreo...</div>
+      </div>
+    </div>
+  </div>
+
 
 </div>
 
@@ -2334,10 +2413,217 @@ IMPORTANTE: Respondé ÚNICAMENTE con el objeto JSON. Sin texto antes ni despué
   fetchMacroData();
   fetchNews();
 
-  setInterval(fetchWhaleBTC, 120000);   // cada 2 min
-  setInterval(fetchWhaleETH, 180000);   // cada 3 min
-  setInterval(fetchMacroData, 10800000);  // cada 3 horas (25 llamadas/día)
-  setInterval(fetchNews, 180000);       // cada 3 min
+  setInterval(fetchWhaleBTC, 120000);
+  setInterval(fetchWhaleETH, 180000);
+  setInterval(fetchMacroData, 10800000);
+  setInterval(fetchNews, 180000);
+
+  // ═══════════════════════════════════════════════════════
+  // NUEVOS MÓDULOS v6.0 — INDICADORES DE BALLENAS PRO
+  // Open Interest · Exchange Flows · Liquidaciones · Alertas
+  // ═══════════════════════════════════════════════════════
+
+  // ── OPEN INTEREST + LIQUIDACIONES via Binance Futures ──
+  async function fetchOpenInterest() {
+    try {
+      const symbols = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT'];
+      const [oiRes, liqRes, lsRes] = await Promise.all([
+        fetch(PROXY + encodeURIComponent('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT')),
+        fetch(PROXY + encodeURIComponent('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1h&limit=1')),
+        fetch(PROXY + encodeURIComponent('https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol=BTCUSDT&period=1h&limit=1')),
+      ]);
+      const oi  = await oiRes.json();
+      const ls  = await lsRes.json();
+      const top = await lsRes.json();
+
+      const oiVal  = parseFloat(oi.openInterest || 0);
+      const lsRatio= ls[0] ? parseFloat(ls[0].longShortRatio) : 1.0;
+      const longPct = Math.round(lsRatio / (1 + lsRatio) * 100);
+      const shortPct= 100 - longPct;
+
+      // Actualizar panel OI
+      const oiB = (oiVal / 1e9).toFixed(2);
+      document.getElementById('oi-value').textContent = '$' + oiB + 'B';
+      document.getElementById('oi-long-pct').textContent = longPct + '%';
+      document.getElementById('oi-short-pct').textContent = shortPct + '%';
+      document.getElementById('oi-long-bar').style.width = longPct + '%';
+      document.getElementById('oi-short-bar').style.width = shortPct + '%';
+
+      // Señal educativa
+      let oiSignal = '', oiColor = 'var(--accent3)';
+      if (longPct > 65) {
+        oiSignal = '⚠️ LONGS SOBRECARGADOS — riesgo de liquidación masiva si el precio baja';
+        oiColor  = 'var(--accent2)';
+      } else if (shortPct > 60) {
+        oiSignal = '🚀 SHORTS DOMINAN — posible short squeeze si el precio sube';
+        oiColor  = 'var(--accent)';
+      } else {
+        oiSignal = '⚖️ BALANCE NEUTRO — mercado sin sesgo extremo';
+        oiColor  = 'var(--accent3)';
+      }
+      document.getElementById('oi-signal').textContent  = oiSignal;
+      document.getElementById('oi-signal').style.color  = oiColor;
+
+      addLog('var(--accent4)', `📊 OI BTC: $${oiB}B · Longs:${longPct}% Shorts:${shortPct}%`);
+      checkAlerts({ oiLongPct: longPct, oiShortPct: shortPct });
+    } catch(e) {
+      document.getElementById('oi-value').textContent = 'Error';
+    }
+  }
+
+  // ── EXCHANGE FLOWS via Blockchain.info ─────────────────
+  async function fetchExchangeFlows() {
+    try {
+      // Volumen on-chain BTC últimos 5 días
+      const res = await fetch(PROXY + encodeURIComponent(
+        'https://api.blockchain.info/charts/estimated-transaction-volume?timespan=5days&format=json&cors=true'
+      ));
+      const data = await res.json();
+      if (!data?.values?.length) return;
+
+      const vals   = data.values.slice(-5).map(v => v.y);
+      const latest = vals[vals.length - 1];
+      const avg    = vals.slice(0, -1).reduce((a, b) => a + b, 0) / (vals.length - 1);
+      const ratio  = latest / avg;
+      const pctChg = ((ratio - 1) * 100).toFixed(1);
+
+      document.getElementById('flow-ratio').textContent  = ratio.toFixed(2) + 'x';
+      document.getElementById('flow-change').textContent = (pctChg > 0 ? '+' : '') + pctChg + '%';
+
+      let flowSignal = '', flowColor = 'var(--accent3)';
+      if (ratio > 1.5) {
+        flowSignal = '🐋 VOLUMEN ON-CHAIN MUY ALTO — ballenas activas, movimiento importante próximo';
+        flowColor  = 'var(--accent3)';
+      } else if (ratio > 1.2) {
+        flowSignal = '📈 ACTIVIDAD ON-CHAIN ELEVADA — acumulación o distribución en curso';
+        flowColor  = 'var(--accent3)';
+      } else if (ratio < 0.7) {
+        flowSignal = '😴 ACTIVIDAD ON-CHAIN BAJA — mercado durmiendo, esperar catalizador';
+        flowColor  = 'var(--muted2)';
+      } else {
+        flowSignal = '🔄 ACTIVIDAD ON-CHAIN NORMAL — sin señal fuerte de ballenas';
+        flowColor  = 'var(--muted2)';
+      }
+      document.getElementById('flow-signal').textContent = flowSignal;
+      document.getElementById('flow-signal').style.color = flowColor;
+
+      // Mini chart de barras
+      const maxVal = Math.max(...vals);
+      document.getElementById('flow-bars').innerHTML = vals.map((v, i) => {
+        const h   = Math.round(v / maxVal * 40);
+        const col = i === vals.length - 1
+          ? (ratio > 1.2 ? 'var(--accent3)' : 'var(--accent4)')
+          : 'var(--border)';
+        return `<div style="width:14px;height:${h}px;background:${col};border-radius:2px 2px 0 0;align-self:flex-end"></div>`;
+      }).join('');
+
+      addLog('var(--accent4)', `⛓️ On-chain BTC: ${ratio.toFixed(2)}x del promedio (${pctChg > 0 ? '+' : ''}${pctChg}%)`);
+      checkAlerts({ onChainRatio: ratio });
+    } catch(e) {
+      document.getElementById('flow-ratio').textContent = 'Error';
+    }
+  }
+
+  // ── FUNDING RATE MULTI-ACTIVO via Binance Futures ───────
+  async function fetchFundingRates() {
+    try {
+      const res  = await fetch(PROXY + encodeURIComponent('https://fapi.binance.com/fapi/v1/premiumIndex'));
+      const data = await res.json();
+      const syms = ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','LINKUSDT'];
+      const rows = syms.map(s => {
+        const d   = data.find(x => x.symbol === s);
+        if (!d) return null;
+        const fr  = parseFloat(d.lastFundingRate) * 100;
+        const col = fr > 0.08 ? 'var(--accent2)' : fr < -0.03 ? 'var(--accent)' : 'var(--accent3)';
+        const sig = fr > 0.08 ? '⚠️' : fr < -0.03 ? '🟢' : '⚪';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(30,45,74,0.4);font-size:0.78rem">
+          <span style="color:var(--muted2);font-family:'Space Mono',monospace;font-size:0.65rem">${s.replace('USDT','')}</span>
+          <span style="color:${col};font-family:'Space Mono',monospace;font-size:0.65rem">${fr > 0 ? '+' : ''}${fr.toFixed(4)}% ${sig}</span>
+        </div>`;
+      }).filter(Boolean).join('');
+
+      document.getElementById('funding-multi').innerHTML = rows;
+
+      // Señal global de funding
+      const btcFr = data.find(x => x.symbol === 'BTCUSDT');
+      if (btcFr) {
+        const fr = parseFloat(btcFr.lastFundingRate) * 100;
+        let fundingSignal = '', fundingColor = 'var(--accent3)';
+        if (fr > 0.10) {
+          fundingSignal = '🔴 FUNDING MUY ALTO (+' + fr.toFixed(3) + '%) — longs pagan mucho, corrección probable';
+          fundingColor = 'var(--accent2)';
+        } else if (fr > 0.05) {
+          fundingSignal = '🟡 FUNDING ELEVADO (+' + fr.toFixed(3) + '%) — mercado sesgado a longs, cuidado';
+          fundingColor = 'var(--accent3)';
+        } else if (fr < -0.03) {
+          fundingSignal = '🟢 FUNDING NEGATIVO (' + fr.toFixed(3) + '%) — shorts pagan, posible rebote';
+          fundingColor = 'var(--accent)';
+        } else {
+          fundingSignal = '⚪ FUNDING NEUTRO (' + fr.toFixed(3) + '%) — sin presión extrema';
+          fundingColor = 'var(--muted2)';
+        }
+        document.getElementById('funding-signal').textContent = fundingSignal;
+        document.getElementById('funding-signal').style.color = fundingColor;
+        checkAlerts({ btcFundingRate: fr });
+      }
+
+      addLog('var(--accent4)', `💸 Funding BTC: ${(parseFloat(btcFr?.lastFundingRate||0)*100).toFixed(4)}%`);
+    } catch(e) {}
+  }
+
+  // ── SISTEMA DE ALERTAS EDUCATIVAS ──────────────────────
+  const alertHistory = [];
+
+  function checkAlerts(data) {
+    const now    = new Date().toLocaleTimeString('es-AR');
+    const alerts = [];
+
+    if (data.oiLongPct !== undefined) {
+      if (data.oiLongPct > 70)
+        alerts.push({ level: 'DANGER', icon: '🔴', msg: `ALERTA: ${data.oiLongPct}% del mercado está LONG. Riesgo de liquidación masiva en cascada si BTC baja 3-5%.`, time: now });
+      if (data.oiShortPct > 65)
+        alerts.push({ level: 'OPP', icon: '🟢', msg: `OPORTUNIDAD: ${data.oiShortPct}% del mercado está SHORT. Las ballenas pueden forzar un short squeeze.`, time: now });
+    }
+    if (data.onChainRatio !== undefined) {
+      if (data.onChainRatio > 2.0)
+        alerts.push({ level: 'WHALE', icon: '🐋', msg: `BALLENAS ACTIVAS: Volumen on-chain ${data.onChainRatio.toFixed(1)}x el promedio. Movimiento grande inminente.`, time: now });
+    }
+    if (data.btcFundingRate !== undefined) {
+      if (data.btcFundingRate > 0.12)
+        alerts.push({ level: 'DANGER', icon: '⚠️', msg: `FUNDING EXTREMO: ${data.btcFundingRate.toFixed(3)}%. Históricamente precede correcciones del 5-15%.`, time: now });
+      if (data.btcFundingRate < -0.05)
+        alerts.push({ level: 'OPP', icon: '🚀', msg: `FUNDING NEGATIVO EXTREMO: ${data.btcFundingRate.toFixed(3)}%. Las ballenas están acumulando. Posible rebote.`, time: now });
+    }
+
+    alerts.forEach(a => {
+      alertHistory.unshift(a);
+      if (alertHistory.length > 20) alertHistory.pop();
+    });
+
+    if (alerts.length > 0) renderAlerts();
+  }
+
+  function renderAlerts() {
+    const el = document.getElementById('alert-feed');
+    if (!el) return;
+    el.innerHTML = alertHistory.slice(0, 8).map(a => {
+      const bg  = a.level === 'DANGER' ? 'rgba(255,61,110,0.08)' : a.level === 'OPP' ? 'rgba(0,255,136,0.08)' : 'rgba(0,180,255,0.08)';
+      const brd = a.level === 'DANGER' ? 'rgba(255,61,110,0.3)' : a.level === 'OPP' ? 'rgba(0,255,136,0.3)' : 'rgba(0,180,255,0.3)';
+      return `<div style="padding:10px 12px;background:${bg};border:1px solid ${brd};border-radius:6px;margin-bottom:8px">
+        <div style="font-size:0.75rem;color:var(--muted2);margin-bottom:4px;font-family:'Space Mono',monospace">${a.icon} ${a.time}</div>
+        <div style="font-size:0.82rem;color:var(--text);line-height:1.4">${a.msg}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted2);font-size:0.8rem;padding:8px">Sin alertas activas. Monitoreando...</div>';
+  }
+
+  // Inicializar y setIntervals
+  fetchOpenInterest();
+  fetchExchangeFlows();
+  fetchFundingRates();
+  setInterval(fetchOpenInterest,  60000);   // cada 1 min
+  setInterval(fetchExchangeFlows, 300000);  // cada 5 min
+  setInterval(fetchFundingRates,  30000);   // cada 30 seg
+
 </script>
 </body>
 </html>
