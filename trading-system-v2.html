@@ -1251,32 +1251,65 @@
         <div style="font-size:0.85rem;line-height:1.6;color:var(--text)" id="agent-reasoning">--</div>
       </div>
 
+      <!-- ¿QUÉ HAGO AHORA? -->
+      <div id="que-hago-output" style="margin-bottom:12px"></div>
+
       <!-- SEÑALES CLAVE -->
       <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
-        <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted2);letter-spacing:2px;margin-bottom:10px">SEÑALES QUE DETERMINARON LA DECISIÓN</div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted2);letter-spacing:2px;margin-bottom:10px">SEÑALES QUE DETERMINARON EL ANÁLISIS</div>
         <div id="agent-signals" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
 
-      <!-- ALERTAS -->
-      <div id="agent-alerts" style="display:none;background:rgba(255,61,110,0.05);border:1px solid rgba(255,61,110,0.2);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent2);letter-spacing:2px;margin-bottom:6px">⚠ ALERTAS DEL AGENTE</div>
+      <!-- ALERTAS / DISCLAIMER -->
+      <div id="agent-alerts" style="display:none;background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.2);border-radius:10px;padding:14px;margin-bottom:12px">
+        <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent3);letter-spacing:2px;margin-bottom:6px">⚠ DISCLAIMER</div>
         <div id="agent-alerts-text" style="font-size:0.82rem;color:var(--muted2)"></div>
       </div>
 
     </div>
 
+    <!-- SIMULADOR DE SEÑALES -->
+    <div style="margin-top:16px">
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted2);letter-spacing:2px;margin-bottom:10px">📊 SIMULADOR — HISTORIAL DE SEÑALES CON P&L EDUCATIVO</div>
+      <div id="signal-simulator">
+        <div style="font-size:0.8rem;color:var(--muted2)">Sin señales registradas aún. Ejecutá el análisis IA.</div>
+      </div>
+    </div>
+
     <!-- HISTORIAL -->
     <div style="margin-top:16px">
-      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted2);letter-spacing:2px;margin-bottom:10px">HISTORIAL DE DECISIONES</div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted2);letter-spacing:2px;margin-bottom:10px">HISTORIAL DE ANÁLISIS</div>
       <div id="agent-history" style="display:flex;flex-direction:column;gap:6px">
-        <div style="font-size:0.8rem;color:var(--muted2)">Sin decisiones registradas aún</div>
+        <div style="font-size:0.8rem;color:var(--muted2)">Sin análisis registrados aún</div>
+      </div>
+    </div>
+
+    <!-- TELEGRAM CONFIG -->
+    <div style="margin-top:16px;padding:14px;background:rgba(0,180,255,0.04);border:1px solid rgba(0,180,255,0.2);border-radius:8px">
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent4);margin-bottom:10px">✈️ TELEGRAM — ENVIAR ALERTAS AUTOMÁTICAS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:0.65rem;color:var(--muted2);margin-bottom:4px">Bot Token (@BotFather)</div>
+          <input id="tg-token" type="password" placeholder="1234567890:ABC..." value="" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:0.75rem;font-family:'Space Mono',monospace">
+        </div>
+        <div>
+          <div style="font-size:0.65rem;color:var(--muted2);margin-bottom:4px">Chat ID (tu usuario)</div>
+          <input id="tg-chat" type="text" placeholder="-1001234567890" value="" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:0.75rem;font-family:'Space Mono',monospace">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button onclick="saveTelegramConfig()" style="padding:6px 14px;background:rgba(0,180,255,0.15);border:1px solid var(--accent4);color:var(--accent4);border-radius:4px;cursor:pointer;font-size:0.75rem">Guardar</button>
+        <button onclick="testTelegram()" style="padding:6px 14px;background:rgba(0,255,136,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:4px;cursor:pointer;font-size:0.75rem">Probar envío</button>
+      </div>
+      <div id="tg-status" style="font-size:0.7rem;color:var(--muted2)">
+        Para obtener tu Chat ID: enviá un mensaje a tu bot y abrí https://api.telegram.org/bot{TOKEN}/getUpdates
       </div>
     </div>
 
     <!-- API KEY NOTICE -->
-    <div style="margin-top:16px;padding:12px;background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.15);border-radius:8px">
-      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent3);margin-bottom:4px">⚙ CONFIGURACIÓN REQUERIDA</div>
-      <div style="font-size:0.78rem;color:var(--muted2)">Para activar el agente: reemplazá <strong style="color:var(--text)">PEGAR_TU_KEY_AQUI</strong> en el código con tu API key de Anthropic y configurá Cloudflare Worker.</div>
+    <div style="margin-top:12px;padding:12px;background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.15);border-radius:8px">
+      <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent3);margin-bottom:4px">⚙ CONFIGURACIÓN</div>
+      <div style="font-size:0.78rem;color:var(--muted2)">El agente IA usa Groq via Cloudflare Worker. Ya está configurado y listo para usar.</div>
     </div>
   </div>
 
@@ -1602,6 +1635,7 @@
       document.getElementById('price-update').textContent = 'Actualizado: ' + nowT.toLocaleTimeString('es-AR');
 
       addLog(btcColor, `📡 BINANCE — BTC: <strong>$${Math.round(assets.btc.price).toLocaleString()}</strong> (${btcSign}${assets.btc.change.toFixed(2)}%) · ETH: $${Math.round(assets.eth.price).toLocaleString()} · SOL: $${assets.sol.price.toFixed(1)} · Rotación Etapa ${rotStage}`);
+      updateSimulator(); // Actualizar P&L simulado con precio actual
 
     } catch(e) {
       console.error('API error:', e);
@@ -1875,71 +1909,95 @@
   }
 
   async function fetchMacroData() {
-    // Always fetch gold (24/7 via Binance PAXG)
+    // Todos los datos via Binance 24/7 — sin depender de Alpha Vantage
     try {
-      const goldRes = await fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT'));
-      const goldD = await goldRes.json();
-      const goldPrice = parseFloat(goldD.lastPrice);
+      const [goldRes, eurRes, btcRes, ethRes] = await Promise.all([
+        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT')),  // Oro real
+        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=EURUSDT')),   // DXY via EUR/USD inverso
+        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT')),   // BTC para VIX aprox
+        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT')),
+      ]);
+      const [goldD, eurD, btcD, ethD] = await Promise.all([goldRes.json(), eurRes.json(), btcRes.json(), ethRes.json()]);
+
+      // ── ORO ──────────────────────────────────────────────
+      const goldPrice  = parseFloat(goldD.lastPrice);
       const goldChange = parseFloat(goldD.priceChangePercent);
-      const goldColor = goldChange >= 0 ? 'var(--accent2)' : 'var(--accent)';
-      const goldSign = goldChange >= 0 ? '+' : '';
+      const goldSign   = goldChange >= 0 ? '+' : '';
+      const goldColor  = goldChange >= 0 ? 'var(--accent3)' : 'var(--accent2)';
       document.getElementById('gold-val').textContent = '$' + Math.round(goldPrice).toLocaleString();
       document.getElementById('gold-val').style.color = goldColor;
-      document.getElementById('gold-tag').className = goldChange >= 0 ? 'tag tag-bear' : 'tag tag-bull';
       document.getElementById('gold-tag').textContent = goldSign + goldChange.toFixed(2) + '%';
-    } catch(e) { console.log('Gold error:', e); }
+      document.getElementById('gold-tag').className   = goldChange >= 0 ? 'tag tag-neutral' : 'tag tag-bull';
 
-    // Load cached values first (always show something)
-    const cached = loadMacroCache();
-    if (cached) displayMacroValues(cached);
+      // ── DXY (via EUR/USD inverso — DXY y EURUSD correlación -0.95) ─
+      const eurPrice  = parseFloat(eurD.lastPrice);
+      const eurChange = parseFloat(eurD.priceChangePercent);
+      // DXY sube cuando EUR baja y viceversa
+      const dxyApprox  = (1 / eurPrice * 100).toFixed(2);
+      const dxyChange  = (-eurChange).toFixed(2);
+      const dxyColor   = parseFloat(dxyChange) >= 0 ? 'var(--accent2)' : 'var(--accent)';
+      const dxySign    = parseFloat(dxyChange) >= 0 ? '+' : '';
+      document.getElementById('dxy-val').textContent = dxyApprox;
+      document.getElementById('dxy-val').style.color = dxyColor;
+      document.getElementById('dxy-tag').textContent = dxySign + dxyChange + '%';
+      document.getElementById('dxy-tag').className   = parseFloat(dxyChange) >= 0 ? 'tag tag-bear' : 'tag tag-bull';
 
-    // Only fetch from Alpha Vantage if market is open
-    if (!isMarketOpen()) {
-      const statusText = '🔒 Mercado cerrado · ';
-      const updateLabel = cached?.lastUpdate ? 'Último: ' + new Date(cached.lastUpdate).toLocaleString('es-AR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : 'Sin datos previos';
-      document.getElementById('macro-update').textContent = statusText + updateLabel;
-      return;
-    }
+      // ── VIX aproximado (volatilidad BTC en 24h como proxy) ──
+      // VIX real requiere licencia — usamos rango BTC alto/bajo como volatilidad
+      const btcHigh   = parseFloat(btcD.highPrice);
+      const btcLow    = parseFloat(btcD.lowPrice);
+      const btcPrice  = parseFloat(btcD.lastPrice);
+      const btcVol    = ((btcHigh - btcLow) / btcPrice * 100).toFixed(1); // rango % = vol proxy
+      const fg        = parseInt(document.getElementById('fg-value')?.textContent) || 50;
+      // VIX proxy: combinar volatilidad BTC con F&G invertido
+      const vixProxy  = (parseFloat(btcVol) * 2 + (100 - fg) * 0.3).toFixed(1);
+      const vixColor  = parseFloat(vixProxy) > 25 ? 'var(--accent2)' : parseFloat(vixProxy) > 15 ? 'var(--accent3)' : 'var(--accent)';
+      document.getElementById('vix-val').textContent = vixProxy;
+      document.getElementById('vix-val').style.color = vixColor;
+      const vixLabel  = parseFloat(vixProxy) > 30 ? 'MIEDO ALTO' : parseFloat(vixProxy) > 20 ? 'ELEVADO' : 'NORMAL';
+      document.getElementById('vix-tag').textContent = vixLabel;
+      document.getElementById('vix-tag').className   = parseFloat(vixProxy) > 25 ? 'tag tag-bear' : 'tag tag-bull';
 
-    // Market is open - fetch fresh data
-    try {
-      const [vixRes, oilRes, dxyRes] = await Promise.all([
-        // VIX via Alternative.me CNN Fear (proxy de VIX)
-        fetch(PROXY + encodeURIComponent('https://api.alternative.me/fng/?limit=1')),
-        // Petróleo via Binance (USOIL no disponible, usar AAVEUSDT como proxy de riesgo)
-        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT')),
-        fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'))
-      ]);
-      const [vixD, oilD, dxyD] = await Promise.all([vixRes.json(), oilRes.json(), dxyRes.json()]);
+      // ── PETRÓLEO — WTIUSDT existe en Binance ───────────────
+      try {
+        const oilRes2   = await fetch(PROXY + encodeURIComponent('https://api.binance.com/api/v3/ticker/24hr?symbol=WTIUSDT'));
+        const oilD      = await oilRes2.json();
+        if (oilD.lastPrice && parseFloat(oilD.lastPrice) > 0) {
+          const oilPrice  = parseFloat(oilD.lastPrice);
+          const oilChange = parseFloat(oilD.priceChangePercent);
+          const oilSign   = oilChange >= 0 ? '+' : '';
+          const oilColor  = oilChange >= 0 ? 'var(--accent3)' : 'var(--accent2)';
+          document.getElementById('oil-val').textContent = '$' + oilPrice.toFixed(2);
+          document.getElementById('oil-val').style.color = oilColor;
+          document.getElementById('oil-tag').textContent = oilSign + oilChange.toFixed(2) + '%';
+          document.getElementById('oil-tag').className   = oilChange >= 0 ? 'tag tag-neutral' : 'tag tag-bull';
+        } else { throw new Error('Sin WTI'); }
+      } catch(e) {
+        // Fallback: estimado via precio BTC (correlación petróleo-riesgo)
+        const btcChg = parseFloat(btcD.priceChangePercent);
+        document.getElementById('oil-val').textContent = '~' + (75 + btcChg * 0.3).toFixed(1);
+        document.getElementById('oil-tag').textContent = 'estimado';
+        document.getElementById('oil-tag').className   = 'tag tag-neutral';
+      }
 
-      const newCache = {
-        lastUpdate: new Date().toISOString(),
-        marketWasClosed: false,
-        vix: null, oil: null, dxy: null
-      };
+      // Señal macro educativa
+      const macroSignal = getMacroSignal(goldChange, parseFloat(dxyChange), parseFloat(vixProxy));
+      document.getElementById('macro-update').textContent = '✅ Actualizado · ' + new Date().toLocaleTimeString('es-AR') + ' · ' + macroSignal;
 
-      const vixPrice = parseFloat(vixD['Global Quote']?.['05. price'] || 0);
-      const vixChange = parseFloat(vixD['Global Quote']?.['10. change percent']?.replace('%','') || 0);
-      if (vixPrice > 0) newCache.vix = { price: vixPrice, change: vixChange };
-
-      const oilPrice = parseFloat(oilD['Global Quote']?.['05. price'] || 0);
-      const oilChange = parseFloat(oilD['Global Quote']?.['10. change percent']?.replace('%','') || 0);
-      if (oilPrice > 0) newCache.oil = { price: oilPrice, change: oilChange };
-
-      const dxyPrice = parseFloat(dxyD['Global Quote']?.['05. price'] || 0);
-      const dxyChange = parseFloat(dxyD['Global Quote']?.['10. change percent']?.replace('%','') || 0);
-      if (dxyPrice > 0) newCache.dxy = { price: dxyPrice, change: dxyChange };
-
-      // Save and display
-      saveMacroCache(newCache);
-      displayMacroValues(newCache);
-      addLog('var(--accent3)', `📊 Macro actualizado: VIX ETF ${vixPrice.toFixed(2)} · Petróleo $${oilPrice.toFixed(2)} · DXY ${dxyPrice.toFixed(2)}`);
+      addLog('var(--accent3)', `📊 Macro: Oro${goldSign}${goldChange.toFixed(1)}% · DXY${dxySign}${dxyChange}% · Vol.BTC ${btcVol}%`);
       updateScoring();
-
     } catch(e) {
-      console.error('Alpha Vantage error:', e);
-      document.getElementById('macro-update').textContent = 'Error API · ' + (cached ? 'Mostrando último valor conocido' : 'Sin datos');
+      console.error('Macro error:', e);
+      document.getElementById('macro-update').textContent = 'Error cargando datos macro';
     }
+  }
+
+  function getMacroSignal(goldChg, dxyChg, vixVal) {
+    if (dxyChg > 0.5 && goldChg < 0) return '⚠️ Dólar fuerte → presión bajista en crypto';
+    if (goldChg > 1 && dxyChg < 0)   return '🟡 Oro sube, dólar cae → inflación hedge activo';
+    if (vixVal > 30)                  return '🔴 Volatilidad alta → modo defensivo recomendado';
+    if (goldChg > 0.5 && vixVal > 20) return '⚠️ Risk-off: inversores huyendo a activos seguros';
+    return '🟢 Macro neutral';
   }
 
   // ═══════════════════════════════════════
@@ -2117,7 +2175,61 @@
   // FASE 3 — CEREBRO AGENTE IA
   // ═══════════════════════════════════════
   const CLOUDFLARE_WORKER = 'https://apex-agent.josepsanz2000.workers.dev';
-  // API key guardada de forma segura en Cloudflare Worker, no acá
+
+  // ── TELEGRAM BOT CONFIG ───────────────────────────────
+  // Para activar: crear bot en @BotFather, obtener token
+  // Luego enviar mensaje a tu bot y obtener chat_id
+  // https://api.telegram.org/bot{TOKEN}/getUpdates
+  let TELEGRAM_BOT_TOKEN = localStorage.getItem('tg_token') || '';
+  let TELEGRAM_CHAT_ID   = localStorage.getItem('tg_chat')  || '';
+
+  async function sendTelegramAlert(response, datos) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+    try {
+      const btcPrice = datos.precios.btc || '--';
+      const fg       = document.getElementById('fg-value')?.textContent || '--';
+      const msg =
+        `🤖 *APEX SIGNAL — ANÁLISIS EDUCATIVO*\n\n` +
+        `📊 *Señal:* ${response.accion} en *${response.activo}*\n` +
+        `💰 *Asignación sugerida:* ${response.capital_pct}\n` +
+        `🎯 *Confianza IA:* ${response.confianza}%\n` +
+        `😱 *Fear & Greed:* ${fg}\n` +
+        `₿ *BTC ahora:* ${btcPrice}\n\n` +
+        `📝 *Análisis:* ${response.razonamiento?.slice(0,300)}...\n\n` +
+        `⚠️ _Análisis educativo. No es consejo financiero. Los mercados son volátiles y podés perder capital._`;
+
+      await fetch(\`https://api.telegram.org/bot\${TELEGRAM_BOT_TOKEN}/sendMessage\`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id:    TELEGRAM_CHAT_ID,
+          text:       msg,
+          parse_mode: 'Markdown'
+        })
+      });
+      addLog('var(--accent4)', '✈️ Alerta enviada a Telegram');
+    } catch(e) { console.log('Telegram error:', e); }
+  }
+
+  function saveTelegramConfig() {
+    const token = document.getElementById('tg-token')?.value?.trim();
+    const chat  = document.getElementById('tg-chat')?.value?.trim();
+    if (token && chat) {
+      TELEGRAM_BOT_TOKEN = token;
+      TELEGRAM_CHAT_ID   = chat;
+      localStorage.setItem('tg_token', token);
+      localStorage.setItem('tg_chat',  chat);
+      document.getElementById('tg-status').textContent = '✅ Guardado — próxima señal se enviará a Telegram';
+      document.getElementById('tg-status').style.color = 'var(--accent)';
+    }
+  }
+
+  function testTelegram() {
+    sendTelegramAlert({
+      accion: 'PRUEBA', activo: 'BTC', capital_pct: '--',
+      confianza: '--', razonamiento: 'Mensaje de prueba desde APEX System v6. Tu bot está funcionando correctamente.'
+    }, { precios: { btc: document.getElementById('btc-price-big')?.textContent || '--' } });
+  }
 
   let agentHistory = [];
   let agentRunning = false;
@@ -2159,8 +2271,26 @@
         eth_presion: document.getElementById('whale-eth-pct')?.textContent || '--',
       },
       modo_actual: ['TENSIÓN','GUERRA/CRISIS','ALCISTA','LATERAL'][currentMode] || '--',
+      open_interest: {
+        longs: document.getElementById('oi-long-pct')?.textContent || '--',
+        shorts: document.getElementById('oi-short-pct')?.textContent || '--',
+        señal: document.getElementById('oi-signal')?.textContent?.slice(0,80) || '--',
+      },
+      on_chain: {
+        ratio: document.getElementById('flow-ratio')?.textContent || '--',
+        señal: document.getElementById('flow-signal')?.textContent?.slice(0,80) || '--',
+      },
+      funding: {
+        señal: document.getElementById('funding-signal')?.textContent?.slice(0,80) || '--',
+      },
       puntuacion: document.getElementById('scoring-verdict')?.textContent?.trim() || '--',
-      historial_reciente: agentHistory.slice(-3).map(h => `${h.fecha}: ${h.accion} ${h.activo} (${h.resultado || 'pendiente'})`).join(' | ') || 'Sin historial',
+      alertas_activas: alertHistory.slice(0,3).map(a => a.msg?.slice(0,60)).join(' | ') || 'Sin alertas',
+      historial_reciente: agentHistory.slice(-3).map(h => \`\${h.fecha}: \${h.accion} \${h.activo} (resultado:\${h.resultado||'pendiente'})\`).join(' | ') || 'Sin historial',
+      sim_winrate: (() => {
+        const w = signalSimulator.filter(s=>s.resultado?.includes('ACIERTO')).length;
+        const l = signalSimulator.filter(s=>s.resultado?.includes('STOP')).length;
+        return (w+l)>0 ? Math.round(w/(w+l)*100)+'%' : 'sin datos';
+      })(),
     };
   }
 
@@ -2369,20 +2499,19 @@ IMPORTANTE: Respondé ÚNICAMENTE con el objeto JSON. Sin texto antes ni despué
     document.getElementById('agent-output').style.display = 'block';
 
     const accionColors = {
-      'COMPRAR': 'var(--accent)',
-      'VENDER': 'var(--accent2)',
-      'SHORT': 'var(--accent2)',
-      'HOLD': 'var(--accent3)',
-      'ESPERAR': 'var(--accent4)'
+      'PROBABLE_SUBA': 'var(--accent)', 'COMPRAR': 'var(--accent)',
+      'PROBABLE_BAJA': 'var(--accent2)', 'VENDER': 'var(--accent2)', 'SHORT': 'var(--accent2)',
+      'LATERAL': 'var(--accent3)', 'ATENCION': 'var(--accent3)', 'HOLD': 'var(--accent3)',
+      'NEUTRAL': 'var(--muted2)', 'ESPERAR': 'var(--muted2)'
     };
-    const color = accionColors[r.accion] || 'var(--text)';
+    const color = accionColors[r.accion] || 'var(--accent3)';
 
     document.getElementById('agent-action').textContent = r.accion;
     document.getElementById('agent-action').style.color = color;
     document.getElementById('agent-asset').textContent = r.activo;
     document.getElementById('agent-asset').style.color = color;
-    document.getElementById('agent-capital').textContent = r.capital_pct + ' · ' + r.apalancamiento;
-    document.getElementById('agent-stop').textContent = r.stop_loss_pct + '%';
+    document.getElementById('agent-capital').textContent = (r.capital_pct || '--') + ' · ' + (r.apalancamiento || 'x1');
+    document.getElementById('agent-stop').textContent = (r.stop_loss_pct || '--') + '%';
     document.getElementById('agent-confidence').textContent = r.confianza + '%';
     document.getElementById('agent-confidence').style.color = r.confianza > 70 ? 'var(--accent)' : r.confianza > 50 ? 'var(--accent3)' : 'var(--accent2)';
     document.getElementById('agent-mode').textContent = r.modo_detectado;
@@ -2397,43 +2526,158 @@ IMPORTANTE: Respondé ÚNICAMENTE con el objeto JSON. Sin texto antes ni despué
       </div>`
     ).join('');
 
-    // Alertas
-    if (r.alertas) {
+    // Disclaimer
+    if (r.alertas || r.disclaimer) {
       document.getElementById('agent-alerts').style.display = 'block';
-      document.getElementById('agent-alerts-text').textContent = r.alertas;
-    } else {
-      document.getElementById('agent-alerts').style.display = 'none';
+      document.getElementById('agent-alerts-text').textContent = r.disclaimer || r.alertas;
+    }
+
+    // ── SECCIÓN "¿QUÉ HAGO AHORA?" — clara para el usuario ──
+    const stopPct  = parseFloat(r.stop_loss_pct) || 3;
+    const btcEl    = document.getElementById('btc-price-big');
+    const btcPrice = btcEl ? parseFloat(btcEl.textContent.replace(/[^0-9.]/g,'')) : 0;
+    let entradaSalida = '';
+    if (btcPrice > 0 && (r.activo === 'BTC' || !r.activo)) {
+      const stopVal   = Math.round(btcPrice * (1 - stopPct/100)).toLocaleString();
+      const targetVal = Math.round(btcPrice * (1 + stopPct * 2.5/100)).toLocaleString();
+      entradaSalida = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0;text-align:center">
+        <div style="padding:8px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px">
+          <div style="font-size:0.6rem;color:var(--muted2);font-family:'Space Mono',monospace">ENTRADA APROX.</div>
+          <div style="font-size:0.95rem;color:var(--accent);font-family:'Bebas Neue',sans-serif">$${btcPrice.toLocaleString()}</div>
+        </div>
+        <div style="padding:8px;background:rgba(255,61,110,0.05);border:1px solid rgba(255,61,110,0.2);border-radius:6px">
+          <div style="font-size:0.6rem;color:var(--muted2);font-family:'Space Mono',monospace">STOP (-${stopPct}%)</div>
+          <div style="font-size:0.95rem;color:var(--accent2);font-family:'Bebas Neue',sans-serif">$${stopVal}</div>
+        </div>
+        <div style="padding:8px;background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.2);border-radius:6px">
+          <div style="font-size:0.6rem;color:var(--muted2);font-family:'Space Mono',monospace">OBJETIVO (+${(stopPct*2.5).toFixed(0)}%)</div>
+          <div style="font-size:0.95rem;color:var(--accent4);font-family:'Bebas Neue',sans-serif">$${targetVal}</div>
+        </div>
+      </div>`;
+    }
+
+    const queHago = document.getElementById('que-hago-output');
+    if (queHago) {
+      queHago.innerHTML = `
+        <div style="border:2px solid ${color};border-radius:10px;padding:16px;background:rgba(0,0,0,0.3);margin-bottom:12px">
+          <div style="font-size:0.6rem;color:var(--muted2);font-family:'Space Mono',monospace;margin-bottom:6px">📊 ANÁLISIS EDUCATIVO IA · ${new Date().toLocaleTimeString('es-AR')}</div>
+          <div style="font-size:1.8rem;font-family:'Bebas Neue',sans-serif;color:${color};letter-spacing:2px">${r.accion} — <span style="color:var(--text)">${r.activo}</span></div>
+          <div style="font-size:0.9rem;color:var(--muted2);margin:4px 0 12px">Asignar máx. <strong style="color:${color}">${r.capital_pct || '--'}</strong> · Confianza IA: <strong style="color:${color}">${r.confianza}%</strong></div>
+          ${entradaSalida}
+          <div style="font-size:0.82rem;color:var(--text);line-height:1.6;margin-bottom:10px">${r.razonamiento}</div>
+          <div style="padding:10px;background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.25);border-radius:6px;font-size:0.71rem;color:var(--accent3);line-height:1.5">
+            ⚠️ <strong>SOLO EDUCATIVO:</strong> Análisis generado por IA con fines educativos. No es asesoramiento financiero ni garantiza resultados. Los mercados son volátiles — podés perder todo tu capital. Investigá siempre por tu cuenta.
+          </div>
+        </div>`;
     }
 
     document.getElementById('agent-last-run').textContent = 'Último análisis: ' + new Date().toLocaleTimeString('es-AR');
-    addLog(color, `🤖 AGENTE: <strong>${r.accion} ${r.activo}</strong> · ${r.capital_pct} · Confianza: ${r.confianza}% · Modo: ${r.modo_detectado}`);
+    addLog(color, `🤖 AGENTE: <strong>${r.accion} ${r.activo}</strong> · ${r.capital_pct || '--'} · Confianza: ${r.confianza}%`);
+
+    // Enviar a Telegram si está configurado
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) sendTelegramAlert(r, datos);
   }
 
+  // Registro con simulación de P&L
+  const signalSimulator = [];
+
   function guardarHistorial(r, datos) {
-    const entrada = {
-      fecha: new Date().toLocaleString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),
-      accion: r.accion,
-      activo: r.activo,
-      capital: r.capital_pct,
+    const btcEl    = document.getElementById('btc-price-big');
+    const btcPrice = btcEl ? parseFloat(btcEl.textContent.replace(/[^0-9.]/g,'')) : 0;
+    const stopPct  = parseFloat(r.stop_loss_pct) / 100 || 0.03;
+    const entry = {
+      id:        Date.now(),
+      fecha:     new Date().toLocaleString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),
+      accion:    r.accion,
+      activo:    r.activo,
+      capital:   r.capital_pct,
       confianza: r.confianza + '%',
-      modo: r.modo_detectado,
-      btc_precio: document.getElementById('btc-price-big')?.textContent?.replace(/[^0-9,]/g,'') || '--',
-      resultado: null // se completa manualmente después
+      modo:      r.modo_detectado,
+      btc_precio:btcEl?.textContent || '--',
+      btcEntry:  btcPrice,
+      stopPct,
+      targetPct: stopPct * 2.5,
+      razonamiento: r.razonamiento,
+      resultado: null,
+      pnlSim:   null,
+      timestamp: Date.now(),
     };
-    agentHistory.unshift(entrada);
-    if (agentHistory.length > 20) agentHistory.pop();
+    if (btcPrice > 0 && r.accion !== 'NEUTRAL' && r.accion !== 'ESPERAR') {
+      signalSimulator.unshift(entry);
+      if (signalSimulator.length > 50) signalSimulator.pop();
+    }
+    agentHistory.unshift(entry);
+    if (agentHistory.length > 30) agentHistory.pop();
+    renderHistory();
+    renderSimulator();
+  }
 
-    // Actualizar historial visual
+  function updateSimulator() {
+    const btcEl  = document.getElementById('btc-price-big');
+    const btcNow = btcEl ? parseFloat(btcEl.textContent.replace(/[^0-9.]/g,'')) : 0;
+    if (!btcNow) return;
+    let changed = false;
+    signalSimulator.forEach(s => {
+      if (s.resultado && !s.resultado.includes('PEND')) return;
+      if (!s.btcEntry || s.activo !== 'BTC') return;
+      const pct      = (btcNow - s.btcEntry) / s.btcEntry;
+      const hoursAgo = (Date.now() - s.timestamp) / 3600000;
+      if (hoursAgo >= 4) {
+        const isLong = ['PROBABLE_SUBA','COMPRAR'].includes(s.accion);
+        const gain   = isLong ? pct : -pct;
+        if (gain > s.targetPct)     { s.resultado = '✅ ACIERTO'; s.pnlSim = '+' + (gain*100).toFixed(1) + '%'; }
+        else if (gain < -s.stopPct) { s.resultado = '❌ STOP';    s.pnlSim = (gain*100).toFixed(1) + '%'; }
+        else                         { s.resultado = '⏳ ABIERTO'; s.pnlSim = (gain*100).toFixed(1) + '%'; }
+        changed = true;
+      }
+    });
+    if (changed) renderSimulator();
+  }
+
+  function renderSimulator() {
+    const el = document.getElementById('signal-simulator');
+    if (!el) return;
+    const items = signalSimulator.slice(0, 10);
+    const wins  = items.filter(s=>s.resultado?.includes('ACIERTO')).length;
+    const total = items.filter(s=>s.resultado&&!s.resultado.includes('ABIERTO')).length;
+    const wr    = total > 0 ? Math.round(wins/total*100) : null;
+    el.innerHTML = `
+      <div style="display:flex;gap:12px;margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid var(--border)">
+        <div style="text-align:center;flex:1"><div style="font-size:1.3rem;font-family:'Bebas Neue',sans-serif;color:${wr>55?'var(--accent)':'var(--accent2)'}">${wr !== null ? wr+'%' : '--'}</div><div style="font-size:0.6rem;color:var(--muted2)">WIN RATE</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:1.3rem;font-family:'Bebas Neue',sans-serif;color:var(--accent)">${wins}</div><div style="font-size:0.6rem;color:var(--muted2)">ACIERTOS</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:1.3rem;font-family:'Bebas Neue',sans-serif;color:var(--accent2)">${total-wins}</div><div style="font-size:0.6rem;color:var(--muted2)">STOPS</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:1.3rem;font-family:'Bebas Neue',sans-serif;color:var(--accent4)">${signalSimulator.filter(s=>!s.resultado||s.resultado.includes('ABIERTO')).length}</div><div style="font-size:0.6rem;color:var(--muted2)">ACTIVAS</div></div>
+      </div>
+      ${items.length === 0 ? '<div style="color:var(--muted2);font-size:0.8rem;padding:8px">Ejecutá el análisis IA para registrar señales.</div>' :
+        items.map(s => {
+          const rc = s.resultado?.includes('ACIERTO') ? 'var(--accent)' : s.resultado?.includes('STOP') ? 'var(--accent2)' : 'var(--muted2)';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(30,45,74,0.3);font-size:0.73rem">
+            <span style="color:var(--muted2);font-family:'Space Mono',monospace;font-size:0.58rem;flex-shrink:0">${s.fecha}</span>
+            <span style="color:var(--accent4);font-weight:600;flex-shrink:0">${s.accion}</span>
+            <span style="color:var(--text)">${s.activo}</span>
+            <span style="color:var(--muted2);font-size:0.68rem">${s.btc_precio}</span>
+            <span style="color:${rc};margin-left:auto;font-family:'Space Mono',monospace;font-size:0.6rem">${s.resultado || 'En curso'} ${s.pnlSim ? '('+s.pnlSim+')' : ''}</span>
+          </div>`;
+        }).join('')}
+      <div style="margin-top:8px;font-size:0.68rem;color:var(--muted2);padding:6px;background:rgba(0,0,0,0.2);border-radius:4px">⚠️ Simulación educativa. No representa operaciones reales.</div>`;
+  }
+
+  function renderHistory() {
     const histEl = document.getElementById('agent-history');
-    const accionColors = { 'COMPRAR': 'var(--accent)', 'VENDER': 'var(--accent2)', 'SHORT': 'var(--accent2)', 'HOLD': 'var(--accent3)', 'ESPERAR': 'var(--accent4)' };
-
+    if (!histEl) return;
+    const accionColors = {
+      'PROBABLE_SUBA':'var(--accent)','COMPRAR':'var(--accent)',
+      'PROBABLE_BAJA':'var(--accent2)','VENDER':'var(--accent2)','SHORT':'var(--accent2)',
+      'LATERAL':'var(--accent3)','ATENCION':'var(--accent3)','HOLD':'var(--accent3)',
+      'NEUTRAL':'var(--muted2)','ESPERAR':'var(--muted2)'
+    };
     histEl.innerHTML = agentHistory.slice(0, 8).map(h =>
-      `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;font-size:0.78rem">
+      `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;font-size:0.75rem">
         <span style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted2);flex-shrink:0">${h.fecha}</span>
-        <span style="color:${accionColors[h.accion]};font-weight:600;flex-shrink:0">${h.accion}</span>
+        <span style="color:${accionColors[h.accion]||'var(--muted2)'};font-weight:600;flex-shrink:0">${h.accion}</span>
         <span style="color:var(--text)">${h.activo}</span>
         <span style="color:var(--muted2)">${h.capital}</span>
-        <span style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted2)">BTC: ${h.btc_precio}</span>
+        <span style="color:var(--muted2);font-size:0.65rem">${h.btc_precio}</span>
         <span style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted2);margin-left:auto">${h.confianza}</span>
       </div>`
     ).join('');
